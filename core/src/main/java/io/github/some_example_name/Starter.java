@@ -15,14 +15,6 @@ public class Starter extends Game {
         setScreen(new MenuScreen(this));
     }
 
-    public SpriteBatch getBatch() {
-        return batch;
-    }
-
-    public BitmapFont getFont() {
-        return font;
-    }
-
     @Override
     public void dispose() {
         super.dispose();
