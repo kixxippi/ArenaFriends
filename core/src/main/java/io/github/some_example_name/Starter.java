@@ -5,19 +5,22 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Starter extends Game {
-    public SpriteBatch batch;
-    public BitmapFont font;
+    public SpriteBatch batch; // рендер - рисует спрайты и текст.
+    public BitmapFont font; // шрифт
 
     @Override
     public void create() {
         batch = new SpriteBatch();
         font = new BitmapFont();
+        // Главное меню.
         setScreen(new MenuScreen(this));
     }
 
+    // Освобождения ресурсов при закрытие.
     @Override
     public void dispose() {
         super.dispose();
+        // Освобождаем ресурсы, связанные с рендером.
         batch.dispose();
         font.dispose();
     }
