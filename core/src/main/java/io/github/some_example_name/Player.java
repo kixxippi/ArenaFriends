@@ -1,25 +1,36 @@
 package io.github.some_example_name;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 
-// Класс игрока: хранит позицию, скорость, здоровье и даёт методы для логики.
+// Класс игрока: храним позицию, скорость, здоровье и даём методы для логики
 public class Player {
-    private final Rectangle rect; // прямоугольник хитбокса / положения
-    private float speed;          // скорость движения (px/s)
+    private final Rectangle rect; // прямоугольник хитбокса
+    private float speed; // скорость движения
 
-    private final int maxHp;      // максимальное здоровье
-    private int hp;               // текущее здоровье
+    private final int maxHp;
+    private int hp;
 
-    private Direction facing;     // направление, куда смотрит игрок
+    private Direction facing; // направление, куда смотрит игрок
 
-    public Player(float x, float y, float w, float h) {
+    private Texture textureRight;
+    private Texture textureLeft;
+
+    public Player(float x, float y, float w, float h,
+                  String textureRightPath, String textureLeftPath) {
         this.rect = new Rectangle(x, y, w, h);
         this.speed = 200f;
 
-        this.maxHp = 100; // максимум HP
-        this.hp = maxHp;  // стартуем с фулл хп
+        this.maxHp = 100;
+        this.hp = maxHp;
 
         this.facing = Direction.DOWN; // по умолчанию смотрим вниз
+
+        // загружаем текстуры из assets
+        this.textureRight = new Texture(Gdx.files.internal(textureRightPath));
+        this.textureLeft = new Texture(Gdx.files.internal(textureLeftPath));
     }
 
     public void move(float dx, float dy, float dt) {
@@ -30,7 +41,7 @@ public class Player {
             dy /= len;
 
             // обновляем направление, куда смотрит игрок
-            if (Math.abs(dx) > Math.abs(dy)) {
+            if (Math.abs(dx) >= Math.abs(dy)) {
                 facing = dx > 0 ? Direction.RIGHT : Direction.LEFT;
             } else {
                 facing = dy > 0 ? Direction.UP : Direction.DOWN;
@@ -47,12 +58,12 @@ public class Player {
     }
 
     public void heal() {
-        int healAmount = 20; // сколько хилит одна "аптечка"
+        int healAmount = 20;
         hp += healAmount;
-        if (hp > maxHp) hp = maxHp; // не вылезаем выше максимума
+        if (hp > maxHp) hp = maxHp;
     }
 
-    // Полное восстановление до maxHp (вызиваемпри новом раунде).
+    // Полное восстановление до maxHp (вызиваем при новом раунде)
     public void fullHeal() {
         hp = maxHp;
     }
@@ -99,12 +110,35 @@ public class Player {
         return new Rectangle(ax, ay, aw, ah);
     }
 
-    // Атакуем другого игрока: если попали хитбоксом, наносим урон.
+    // Атакуем другого игрока: если попали хитбоксом, наносим урон
     public void attack(Player target) {
         Rectangle hitbox = createAttackHitbox();
         if (hitbox.overlaps(target.getRect())) {
-            target.takeDamage(10); // урон за один удар
+            target.takeDamage(10);
         }
+    }
+
+    // Рисуем спрайт игрока
+    public void render(SpriteBatch batch, int p) {
+        Texture current;
+
+        // выбираем текстуру в зависимости от направления
+        if (facing == Direction.LEFT) {
+            current = textureLeft;
+        } else if (facing == Direction.RIGHT) {
+            current = textureRight;
+        } else {
+            if (p == 1)  current = textureRight;
+            else current = textureLeft;
+        }
+
+        batch.draw(current, rect.x, rect.y, rect.width, rect.height);
+    }
+
+    // Освобождаем ресурсы игрока.
+    public void dispose() {
+        if (textureRight != null) textureRight.dispose();
+        if (textureLeft != null) textureLeft.dispose();
     }
 
     // Getter/Setter

@@ -14,17 +14,17 @@ public class MenuScreen extends ScreenAdapter {
     private static final float VIRTUAL_WIDTH = 1408f;
     private static final float VIRTUAL_HEIGHT = 768f;
 
-    private static final float TITLE_SCALE = 0.6f; // масштаб заголовка относительно оригинального размера (1f = 100%)
-    private static final float TITLE_TOP_MARGIN = 20f;    // двигает заголовок вверх/вниз
-    private static final float TITLE_SHAKE_AMPLITUDE = 5f; // насколько сильно качается по Y(пиксели)
-    private static final float TITLE_SHAKE_SPEED = 4f;     // скорость покачивания
+    private static final float TITLE_SCALE = 0.6f; // масштаб заголовка
+    private static final float TITLE_TOP_MARGIN = 20f; // двигает заголовок вверх/вниз
+    private static final float TITLE_SHAKE_AMPLITUDE = 5f; // насколько сильно качается по Y
+    private static final float TITLE_SHAKE_SPEED = 4f; // скорость покачивания
 
     private final Starter game;
     private Texture background;    // картинка фона
     private Texture titleTexture;  // картинка с названием игры
 
     private OrthographicCamera camera; // камера 2D
-    private Viewport viewport;         // масштабирует мир под размер окна
+    private Viewport viewport; // масштабирует мир под размер окна
 
     private float titleTime = 0f; // внутренний таймер для анимации покачивания
 
@@ -57,6 +57,10 @@ public class MenuScreen extends ScreenAdapter {
             game.setScreen(new GameScreen(game, 2)); // карта 2
             return;
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
+            game.setScreen(new GameScreen(game, 3)); // карта 3
+            return;
+        }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             Gdx.app.exit();
             return;
@@ -73,10 +77,10 @@ public class MenuScreen extends ScreenAdapter {
 
         game.batch.begin();
 
-        // фон: растягиваем на весь виртуальный экран (640×480)
+        // фон: растягиваем на весь виртуальный экран
         game.batch.draw(background, 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
-        // заголовок по центру сверху (в координатах виртуального мира)
+        // заголовок по центру сверху
         float titleWidth = titleTexture.getWidth() * TITLE_SCALE;
         float titleHeight = titleTexture.getHeight() * TITLE_SCALE;
 
@@ -90,13 +94,14 @@ public class MenuScreen extends ScreenAdapter {
 
         float titleY = baseTitleY + shakeOffset;
 
-        // рисуем с заданным масштабом (width/height)
+        // рисуем с заданным масштабом
         game.batch.draw(titleTexture, titleX, titleY, titleWidth, titleHeight);
 
         // текст пунктов меню
         game.font.draw(game.batch, "1 - Start (Map 1)", 60, 120);
         game.font.draw(game.batch, "2 - Start (Map 2)", 60, 90);
-        game.font.draw(game.batch, "ESC - Exit", 60, 60);
+        game.font.draw(game.batch, "3 - Start (Map 3)", 60, 60);
+        game.font.draw(game.batch, "ESC - Exit", 60, 30);
 
         game.batch.end();
     }

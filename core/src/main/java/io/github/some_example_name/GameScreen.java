@@ -5,7 +5,6 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -21,12 +20,10 @@ public class GameScreen extends ScreenAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
 
-    private ShapeRenderer shape;
-
     private Player p1;
     private Player p2;
 
-    private GameMap map; // простая карта-картинка
+    private GameMap map;
 
     public GameScreen(Starter game, int mapId) {
         this.game = game;
@@ -41,14 +38,17 @@ public class GameScreen extends ScreenAdapter {
         camera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
         camera.update();
 
-        shape = new ShapeRenderer();
-
         // создаём карту по номеру
         map = new GameMap(mapId);
 
         // ставим игроков на стартовые позиции
-        p1 = new Player(80, 80, 24, 24);
-        p2 = new Player(480, 320, 24, 24);
+        p1 = new Player(80, 80, 32, 32,
+            "player1_right.png",
+            "player1_left.png");
+
+        p2 = new Player(480, 320, 32, 32,
+            "player2_right.png",
+            "player2_left.png");
     }
 
     @Override
@@ -64,30 +64,18 @@ public class GameScreen extends ScreenAdapter {
         Gdx.gl.glClearColor(0.12f, 0.12f, 0.15f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // задаём матрицу для batch и shape
+        // задаём матрицу для batch
         game.batch.setProjectionMatrix(camera.combined);
-        shape.setProjectionMatrix(camera.combined);
 
-        // рисуем карту (фон)
+        // рисуем карту и игроков
         game.batch.begin();
+        // фон карты
         map.render(game.batch, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-        game.batch.end();
-
-        // рисуем игроков
-        shape.begin(ShapeRenderer.ShapeType.Filled);
-
-        // игрок 1
-        shape.setColor(0f, 0.8f, 1f, 1f);
-        shape.rect(p1.getX(), p1.getY(), p1.getWidth(), p1.getHeight());
-
-        // игрок 2
-        shape.setColor(1f, 0.3f, 0.3f, 1f);
-        shape.rect(p2.getX(), p2.getY(), p2.getWidth(), p2.getHeight());
-
-        shape.end();
+        // игроки
+        p1.render(game.batch, 1);
+        p2.render(game.batch, 2);
 
         // HUD
-        game.batch.begin();
         game.font.draw(game.batch, "Map: " + mapId, 10, VIRTUAL_HEIGHT - 10);
         game.font.draw(game.batch, "P1 HP: " + p1.getHp() + "/" + p1.getMaxHp(), 10, VIRTUAL_HEIGHT - 30);
         game.font.draw(game.batch, "P2 HP: " + p2.getHp() + "/" + p2.getMaxHp(), 10, VIRTUAL_HEIGHT - 50);
@@ -110,6 +98,7 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.J)) dx2 -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.L)) dx2 += 1;
 
+        // движение через методы Player
         p1.move(dx1, dy1, dt);
         p2.move(dx2, dy2, dt);
 
@@ -128,7 +117,7 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    // Ограничиваем игрока границами "мира".
+    // Ограничиваем игрока границами "мира" (виртуального экрана).
     private void clampPlayerToWorld(Player p) {
         float x = MathUtils.clamp(p.getX(), 0, VIRTUAL_WIDTH - p.getWidth());
         float y = MathUtils.clamp(p.getY(), 0, VIRTUAL_HEIGHT - p.getHeight());
@@ -142,7 +131,8 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
-        shape.dispose();
         if (map != null) map.dispose();
+        if (p1 != null) p1.dispose();
+        if (p2 != null) p2.dispose();
     }
 }

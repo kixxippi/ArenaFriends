@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Starter extends Game {
-    public SpriteBatch batch; // рендер - рисует спрайты и текст.
+    public SpriteBatch batch; // рендер - рисует спрайты и текст
     public BitmapFont font; // шрифт
 
     @Override
