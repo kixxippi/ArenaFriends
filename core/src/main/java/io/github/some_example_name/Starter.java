@@ -3,6 +3,7 @@ package io.github.some_example_name;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import io.github.some_example_name.screen.MenuScreen;
 
 public class Starter extends Game {
     public SpriteBatch batch; // рендер - рисует спрайты и текст

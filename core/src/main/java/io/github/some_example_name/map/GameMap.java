@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.some_example_name.map;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;

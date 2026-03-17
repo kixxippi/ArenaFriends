@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.some_example_name.screen;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -8,11 +8,15 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.some_example_name.map.GameMap;
+import io.github.some_example_name.model.Player;
+import io.github.some_example_name.Starter;
+import io.github.some_example_name.combat.Sword;
 
 // Экран игры: фоновая картинка (карта) + два игрока.
 public class GameScreen extends ScreenAdapter {
-    private static final float VIRTUAL_WIDTH = 640f;
-    private static final float VIRTUAL_HEIGHT = 480f;
+    private static final float VIRTUAL_WIDTH = 1408f;
+    private static final float VIRTUAL_HEIGHT = 768f;
 
     private final Starter game;
     private final int mapId;
@@ -41,14 +45,20 @@ public class GameScreen extends ScreenAdapter {
         // создаём карту по номеру
         map = new GameMap(mapId);
 
-        // ставим игроков на стартовые позиции
-        p1 = new Player(80, 80, 32, 32,
-            "player1_right.png",
-            "player1_left.png");
+        // создаём мечи для игроков
+        Sword sword1 = new Sword(10, 500); // 10 урона, 500 мс кулдаун
+        Sword sword2 = new Sword(10, 500);
 
-        p2 = new Player(480, 320, 32, 32,
+        // ставим игроков на стартовые позиции, передаём пути к картинкам и меч
+        p1 = new Player(80, 80, 64, 64,
+            "player1_right.png",
+            "player1_left.png",
+            sword1);
+
+        p2 = new Player(480, 320, 64, 64,
             "player2_right.png",
-            "player2_left.png");
+            "player2_left.png",
+            sword2);
     }
 
     @Override
@@ -72,8 +82,8 @@ public class GameScreen extends ScreenAdapter {
         // фон карты
         map.render(game.batch, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
         // игроки
-        p1.render(game.batch, 1);
-        p2.render(game.batch, 2);
+        p1.render(game.batch);
+        p2.render(game.batch);
 
         // HUD
         game.font.draw(game.batch, "Map: " + mapId, 10, VIRTUAL_HEIGHT - 10);
@@ -117,7 +127,7 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    // Ограничиваем игрока границами "мира" (виртуального экрана).
+    // Ограничиваем игрока границами мира
     private void clampPlayerToWorld(Player p) {
         float x = MathUtils.clamp(p.getX(), 0, VIRTUAL_WIDTH - p.getWidth());
         float y = MathUtils.clamp(p.getY(), 0, VIRTUAL_HEIGHT - p.getHeight());

@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.some_example_name.screen;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.some_example_name.Starter;
 
 public class MenuScreen extends ScreenAdapter {
     // "Виртуальный" размер мира (не меняется при ресайзе окна)
