@@ -17,8 +17,6 @@ public class SpeedPowerUp extends PowerUp {
     public void applyTo(Player player, long nowMs) {
         long endTime = nowMs + durationMs;
         SpeedEffect effect = new SpeedEffect(endTime, multiplier);
-        // позже будем хранить эффекты в самом Player,
-        // а сейчас можно сразу применить:
         effect.applyTo(player, nowMs);
     }
 }

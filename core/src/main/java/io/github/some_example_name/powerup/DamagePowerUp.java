@@ -17,7 +17,6 @@ public class DamagePowerUp extends PowerUp {
     public void applyTo(Player player, long nowMs) {
         long endTime = nowMs + durationMs;
         DamageEffect effect = new DamageEffect(endTime, extraDamage);
-        // позже будем добавлять эффект в список эффектов игрока.
         effect.applyTo(player, nowMs);
     }
 }

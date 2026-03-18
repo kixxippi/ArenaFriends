@@ -6,8 +6,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import io.github.some_example_name.screen.MenuScreen;
 
 public class Starter extends Game {
-    public SpriteBatch batch; // рендер - рисует спрайты и текст
-    public BitmapFont font; // шрифт
+    public SpriteBatch batch;
+    public BitmapFont font;
 
     @Override
     public void create() {
@@ -17,11 +17,9 @@ public class Starter extends Game {
         setScreen(new MenuScreen(this));
     }
 
-    // Освобождения ресурсов при закрытие.
     @Override
     public void dispose() {
         super.dispose();
-        // Освобождаем ресурсы, связанные с рендером.
         batch.dispose();
         font.dispose();
     }

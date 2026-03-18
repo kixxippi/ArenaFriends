@@ -2,7 +2,6 @@ package io.github.some_example_name.effect;
 
 import io.github.some_example_name.model.Player;
 
-// C SpeedEffect extends Effect
 public class SpeedEffect extends Effect {
     private final float speedMultiplier;
 
@@ -16,7 +15,6 @@ public class SpeedEffect extends Effect {
         if (isActive(nowMs)) {
             player.setSpeedMultiplier(speedMultiplier);
         } else {
-            // эффект закончился — вернём множитель к 1
             player.setSpeedMultiplier(1f);
         }
     }

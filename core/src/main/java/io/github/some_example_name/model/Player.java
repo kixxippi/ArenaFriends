@@ -6,21 +6,21 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import io.github.some_example_name.combat.Sword;
 
-// Класс игрока: хранит позицию, скорость, здоровье и даёт методы для логики.
+// player class: position, movement, health and basic logic
 public class Player {
-    private final Rectangle rect; // прямоугольник хитбокса / положения
-    private float baseSpeed;      // базовая скорость движения (px/s)
-    private float speedMultiplier = 1f; // множитель скорости от эффектов
+    private final Rectangle rect;
+    private float baseSpeed;
+    private float speedMultiplier = 1f;
 
-    private final int maxHp;      // максимальное здоровье
-    int hp;                       // текущее здоровье (в UML он не private)
+    private final int maxHp;
+    int hp;
 
-    private Direction facing;     // направление, куда смотрит игрок
+    private Direction facing; // where the player is looking
 
-    private Texture textureRight; // картинка, когда смотрит вправо
-    private Texture textureLeft;  // картинка, когда смотрит влево
+    private Texture textureRight;// texture when facing right
+    private Texture textureLeft;// texture when facing left
 
-    private Sword sword;          // оружие игрока по UML
+    private Sword sword;
 
     public Player(float x, float y, float w, float h,
                   String textureRightPath, String textureLeftPath,
@@ -28,26 +28,25 @@ public class Player {
         this.rect = new Rectangle(x, y, w, h);
         this.baseSpeed = 350f;
 
-        this.maxHp = 100; // максимум HP
-        this.hp = maxHp;  // стартуем с фулл хп
+        this.maxHp = 100;
+        this.hp = maxHp;
 
-        this.facing = Direction.DOWN; // по умолчанию смотрим вниз
+        this.facing = Direction.DOWN;
 
-        // загружаем текстуры из assets
         this.textureRight = new Texture(Gdx.files.internal(textureRightPath));
         this.textureLeft = new Texture(Gdx.files.internal(textureLeftPath));
 
         this.sword = sword;
     }
 
-
     public void move(float dx, float dy, float dt) {
         float len = (float) Math.sqrt(dx * dx + dy * dy);
         if (len > 0) {
+            // normalize direction vector
             dx /= len;
             dy /= len;
 
-            // обновляем направление, куда смотрит игрок
+            // update facing direction
             if (Math.abs(dx) >= Math.abs(dy)) {
                 facing = dx > 0 ? Direction.RIGHT : Direction.LEFT;
             } else {
@@ -61,16 +60,13 @@ public class Player {
         }
     }
 
-
-    // ===== ЗДОРОВЬЕ =====
-
     public void takeDamage(int amount) {
         hp -= amount;
         if (hp < 0) hp = 0;
     }
 
     public void heal() {
-        int healAmount = 20; // сколько хилит одна "аптечка"
+        int healAmount = 20;
         hp += healAmount;
         if (hp > maxHp) hp = maxHp;
     }
@@ -83,14 +79,9 @@ public class Player {
         return hp <= 0;
     }
 
-    // ===== АТАКА ПО UML =====
-
-    // прямоугольник удара
     public Rectangle createAttackRect() {
-        // Насколько далеко бьём вперёд
-        float attackRange = 30f;   // было что-то вроде 10–20, делаем больше
-        // Насколько хитбокс шире/выше самого игрока
-        float extraSize = 16f;     // чем больше, тем легче попасть
+        float attackRange = 30f; // how far forward we hit
+        float extraSize = 16f; // how much bigger than player rectangle
 
         float ax = rect.x;
         float ay = rect.y;
@@ -99,7 +90,6 @@ public class Player {
 
         switch (facing) {
             case UP:
-                // расширяем по бокам, и чуть вперёд
                 ax = rect.x - extraSize / 2f;
                 ay = rect.y + rect.height;
                 aw = rect.width + extraSize;
@@ -128,7 +118,7 @@ public class Player {
         return new Rectangle(ax, ay, aw, ah);
     }
 
-    // UML-версия: создаёт AttackHitbox или null, если кулдаун
+    //create AttackHitbox or null if on cooldown
     public AttackHitbox attack(long nowMs) {
         if (sword == null) return null;
         if (!sword.canAttack(nowMs)) return null;
@@ -138,16 +128,19 @@ public class Player {
         return new AttackHitbox(hitRect, sword.getDamage());
     }
 
-    // Удобная версия для GameScreen: атакуем сразу цель
+    // basic attack without bonus damage
     public void attack(Player target) {
+        attack(target, 0);
+    }
+
+    // overloaded attack with bonus damage
+    public void attack(Player target, int bonusDamage) {
         long nowMs = System.currentTimeMillis();
         AttackHitbox hitbox = attack(nowMs);
         if (hitbox != null && hitbox.hits(target)) {
-            target.takeDamage(hitbox.getDamage());
+            target.takeDamage(hitbox.getDamage() + bonusDamage);
         }
     }
-
-    // ===== ЭФФЕКТЫ: множитель скорости (для луж и бафов) =====
 
     public void setSpeedMultiplier(float multiplier) {
         this.speedMultiplier = multiplier;
@@ -164,8 +157,6 @@ public class Player {
     public void setBaseSpeed(float baseSpeed) {
         this.baseSpeed = baseSpeed;
     }
-
-    // ===== ОТРИСОВКА =====
 
     public void render(SpriteBatch batch) {
         Texture current;
@@ -186,7 +177,7 @@ public class Player {
         if (textureLeft != null) textureLeft.dispose();
     }
 
-    // ===== Getter/Setter =====
+    // Getter/Setter
 
     public Rectangle getRect() {
         return rect;

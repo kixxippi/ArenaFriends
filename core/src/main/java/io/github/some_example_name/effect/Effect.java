@@ -2,8 +2,6 @@ package io.github.some_example_name.effect;
 
 import io.github.some_example_name.model.Player;
 
-// A Effect
-// +getRemainingMs(nowMs: long): long
 public abstract class Effect {
     protected final long endTimeMs;
 
@@ -19,6 +17,5 @@ public abstract class Effect {
         return getRemainingMs(nowMs) > 0;
     }
 
-    // ВАЖНО: абстрактный метод -> будет overriding в наследниках
     public abstract void applyTo(Player player, long nowMs);
 }

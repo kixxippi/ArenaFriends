@@ -11,23 +11,16 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.some_example_name.Starter;
 
 public class MenuScreen extends ScreenAdapter {
-    // "Виртуальный" размер мира (не меняется при ресайзе окна)
-    private static final float VIRTUAL_WIDTH = 1408f;
-    private static final float VIRTUAL_HEIGHT = 768f;
-
-    private static final float TITLE_SCALE = 0.6f; // масштаб заголовка
-    private static final float TITLE_TOP_MARGIN = 20f; // двигает заголовок вверх/вниз
-    private static final float TITLE_SHAKE_AMPLITUDE = 5f; // насколько сильно качается по Y
-    private static final float TITLE_SHAKE_SPEED = 4f; // скорость покачивания
+    private static final float virtualWidth = 1408f;
+    private static final float virtualHeight = 768f;
 
     private final Starter game;
-    private Texture background;    // картинка фона
-    private Texture titleTexture;  // картинка с названием игры
+    private Texture background;
 
-    private OrthographicCamera camera; // камера 2D
-    private Viewport viewport; // масштабирует мир под размер окна
+    private OrthographicCamera camera;
+    private Viewport viewport;
 
-    private float titleTime = 0f; // внутренний таймер для анимации покачивания
+    private MenuTitle menuTitle;
 
     public MenuScreen(Starter game) {
         this.game = game;
@@ -35,31 +28,31 @@ public class MenuScreen extends ScreenAdapter {
 
     @Override
     public void show() {
-        // создаём камеру и viewport с фиксированным виртуальным размером
+        // create camera and viewport with fixed virtual size
         camera = new OrthographicCamera();
-        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
+        viewport = new FitViewport(virtualWidth, virtualHeight, camera);
         viewport.apply();
-        camera.position.set(VIRTUAL_WIDTH / 2f, VIRTUAL_HEIGHT / 2f, 0);
+        camera.position.set(virtualWidth / 2f, virtualHeight / 2f, 0);
         camera.update();
 
-        // загружаем текстуры из assets
-        background = new Texture(Gdx.files.internal("menu_bg.png"));
-        titleTexture = new Texture(Gdx.files.internal("menu_title.png"));
+        background = new Texture(Gdx.files.internal("menu/menu_bg.png"));
+
+        // create title
+        menuTitle = new MenuTitle();
     }
 
     @Override
     public void render(float delta) {
-        // обработка ввода
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
-            game.setScreen(new GameScreen(game, 1)); // карта 1
+            game.setScreen(new GameScreen(game, 1));
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
-            game.setScreen(new GameScreen(game, 2)); // карта 2
+            game.setScreen(new GameScreen(game, 2));
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
-            game.setScreen(new GameScreen(game, 3)); // карта 3
+            game.setScreen(new GameScreen(game, 3));
             return;
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
@@ -67,38 +60,27 @@ public class MenuScreen extends ScreenAdapter {
             return;
         }
 
-        titleTime += delta; // накапливаем время для покачивания заголовка
+        // update title animation
+        if (menuTitle != null) {
+            menuTitle.update(delta);
+        }
 
-        // очистка экрана
+        // clear screen
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // задаём батчу матрицу камеры (чтобы работал viewport)
+        // set the camera projection
         game.batch.setProjectionMatrix(camera.combined);
-
         game.batch.begin();
 
-        // фон: растягиваем на весь виртуальный экран
-        game.batch.draw(background, 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        // draw background on whole virtual screen
+        game.batch.draw(background, 0, 0, virtualWidth, virtualHeight);
 
-        // заголовок по центру сверху
-        float titleWidth = titleTexture.getWidth() * TITLE_SCALE;
-        float titleHeight = titleTexture.getHeight() * TITLE_SCALE;
+        // draw title
+        if (menuTitle != null) {
+            menuTitle.draw(game.batch, virtualWidth, virtualHeight);
+        }
 
-        float titleX = (VIRTUAL_WIDTH - titleWidth) / 2f;
-
-        // базовая позиция по Y (без покачивания)
-        float baseTitleY = VIRTUAL_HEIGHT - titleHeight - TITLE_TOP_MARGIN;
-
-        // вертикальное покачивание по синусоиде
-        float shakeOffset = (float) Math.sin(titleTime * TITLE_SHAKE_SPEED) * TITLE_SHAKE_AMPLITUDE;
-
-        float titleY = baseTitleY + shakeOffset;
-
-        // рисуем с заданным масштабом
-        game.batch.draw(titleTexture, titleX, titleY, titleWidth, titleHeight);
-
-        // текст пунктов меню
         game.font.draw(game.batch, "1 - Start (Map 1)", 60, 120);
         game.font.draw(game.batch, "2 - Start (Map 2)", 60, 90);
         game.font.draw(game.batch, "3 - Start (Map 3)", 60, 60);
@@ -107,16 +89,17 @@ public class MenuScreen extends ScreenAdapter {
         game.batch.end();
     }
 
+
+    // update viewport on window resize
     @Override
     public void resize(int width, int height) {
-        // пересчитываем viewport при изменении размера окна
         viewport.update(width, height, true);
     }
 
+    // clear
     @Override
     public void dispose() {
-        // освобождаем текстуры
         if (background != null) background.dispose();
-        if (titleTexture != null) titleTexture.dispose();
+        if (menuTitle != null) menuTitle.dispose();
     }
 }

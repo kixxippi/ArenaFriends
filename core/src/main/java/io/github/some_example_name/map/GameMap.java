@@ -12,13 +12,13 @@ public class GameMap {
         this.mapId = mapId;
         switch (mapId) {
             case 1:
-                this.mapTexture = new Texture(Gdx.files.internal("map1.png"));
+                this.mapTexture = new Texture(Gdx.files.internal("map/map1.png"));
                 break;
             case 2:
-                mapTexture = new Texture(Gdx.files.internal("map2.png"));
+                mapTexture = new Texture(Gdx.files.internal("map/map2.png"));
                 break;
             case 3:
-                mapTexture = new Texture(Gdx.files.internal("map3.png"));
+                mapTexture = new Texture(Gdx.files.internal("map/map3.png"));
                 break;
         }
     }
