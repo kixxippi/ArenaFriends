@@ -65,7 +65,7 @@ public class GameScreen extends ScreenAdapter {
             "players/player1_left.png",
             sword1);
 
-        p2 = new Player(480, 320, 64, 64,
+        p2 = new Player(virtualWidth - 140, virtualHeight - 140, 64, 64,
             "players/player2_right.png",
             "players/player2_left.png",
             sword2);
@@ -188,13 +188,13 @@ public class GameScreen extends ScreenAdapter {
 
         // dispose arena textures
         if (arenaRenderer != null && arena != null) {
-            if (arena instanceof WallsOnlyArena) {
+            if (mapId == 1) {
                 WallsOnlyArena wallsArena = (WallsOnlyArena) arena;
                 arenaRenderer.disposeWalls(wallsArena.getWallVisuals());
-            } else if (arena instanceof PuddlesOnlyArena) {
+            } else if (mapId == 2) {
                 PuddlesOnlyArena puddlesArena = (PuddlesOnlyArena) arena;
                 arenaRenderer.disposePuddles(puddlesArena.getPuddleVisuals());
-            } else if (arena instanceof MixedArena) {
+            } else if (mapId == 3) {
                 MixedArena mixedArena = (MixedArena) arena;
                 arenaRenderer.disposeWalls(mixedArena.getWallVisuals());
                 arenaRenderer.disposePuddles(mixedArena.getPuddleVisuals());

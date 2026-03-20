@@ -13,7 +13,6 @@ public class Starter extends Game {
     public void create() {
         batch = new SpriteBatch();
         font = new BitmapFont();
-        // Главное меню.
         setScreen(new MenuScreen(this));
     }
 

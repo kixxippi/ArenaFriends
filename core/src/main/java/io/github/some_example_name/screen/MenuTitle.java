@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class MenuTitle {
 
-    // настройки заголовка
     private static final float titleScale = 0.6f;
     private static final float titleTopMargin = 20f;
     private static final float titleShakeAmplitude = 5f;

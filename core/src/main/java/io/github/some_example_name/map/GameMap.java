@@ -12,7 +12,7 @@ public class GameMap {
         this.mapId = mapId;
         switch (mapId) {
             case 1:
-                this.mapTexture = new Texture(Gdx.files.internal("map/map1.png"));
+                mapTexture = new Texture(Gdx.files.internal("map/map1.png"));
                 break;
             case 2:
                 mapTexture = new Texture(Gdx.files.internal("map/map2.png"));
@@ -23,7 +23,6 @@ public class GameMap {
         }
     }
 
-    // Рисуем карту на весь виртуальный экран
     public void render(SpriteBatch batch, float worldWidth, float worldHeight) {
         batch.draw(mapTexture, 0, 0, worldWidth, worldHeight);
     }
