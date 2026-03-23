@@ -27,7 +27,7 @@ public class MixedArena extends BaseRectangleArena {
         walls.add(wall4);
         wallVisuals.add(new WallVisual(wall4, "walls/wall_to_corner.png"));
 
-        Rectangle wall5 = new Rectangle(worldWidth * 0.15f, worldHeight * 0.65f, 50, 212);
+        Rectangle wall5 = new Rectangle(worldWidth * 0.15f, worldHeight * 0.62f, 50, 212);
         walls.add(wall5);
         wallVisuals.add(new WallVisual(wall5, "walls/wall_vertical.png"));
 

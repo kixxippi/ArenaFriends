@@ -63,12 +63,12 @@ public class GameScreen extends ScreenAdapter {
         p1 = new Player(80, 80, 64, 64,
             "players/player1_right.png",
             "players/player1_left.png",
-            sword1);
+            sword1, 1);
 
         p2 = new Player(virtualWidth - 140, virtualHeight - 140, 64, 64,
             "players/player2_right.png",
             "players/player2_left.png",
-            sword2);
+            sword2, 2);
 
         // create arena and renderer
         arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);

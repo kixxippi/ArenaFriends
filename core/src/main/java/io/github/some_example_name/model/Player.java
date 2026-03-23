@@ -24,14 +24,15 @@ public class Player {
 
     public Player(float x, float y, float w, float h,
                   String textureRightPath, String textureLeftPath,
-                  Sword sword) {
+                  Sword sword, int numberPlayer) {
         this.rect = new Rectangle(x, y, w, h);
         this.baseSpeed = 350f;
 
         this.maxHp = 100;
         this.hp = maxHp;
 
-        this.facing = Direction.DOWN;
+        if(numberPlayer == 1) { this.facing = Direction.RIGHT;}
+        else if(numberPlayer == 2) { this.facing = Direction.LEFT;}
 
         this.textureRight = new Texture(Gdx.files.internal(textureRightPath));
         this.textureLeft = new Texture(Gdx.files.internal(textureLeftPath));
