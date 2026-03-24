@@ -5,6 +5,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -38,9 +40,27 @@ public class GameScreen extends ScreenAdapter {
     private Arena arena;
     private ArenaRenderer arenaRenderer;
 
+    private Texture player1Label;
+    private Texture player2Label;
+
+    private Texture heartFull;
+    private Texture heartEmpty;
+
     public GameScreen(Starter game, int mapId) {
         this.game = game;
         this.mapId = mapId;
+    }
+
+    private void drawHearts(SpriteBatch batch, int hp, int maxHp, float startX, float startY) {
+        float heartW = 24f;
+        float heartH = 24f;
+
+        int fullHearts = hp / 10;
+
+        for (int i = 0; i < 10; i++) {
+            Texture t = (i < fullHearts) ? heartFull : heartEmpty;
+            batch.draw(t, startX + i * heartW, startY, heartW, heartH);
+        }
     }
 
     @Override
@@ -73,6 +93,12 @@ public class GameScreen extends ScreenAdapter {
         // create arena and renderer
         arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
         arenaRenderer = new ArenaRenderer();
+
+        player1Label = new Texture(Gdx.files.internal("ui/player1.png"));
+        player2Label = new Texture(Gdx.files.internal("ui/player2.png"));
+
+        heartFull = new Texture(Gdx.files.internal("ui/heart_full.png"));
+        heartEmpty = new Texture(Gdx.files.internal("ui/heart_empty.png"));
     }
 
     @Override
@@ -115,12 +141,40 @@ public class GameScreen extends ScreenAdapter {
         p1.render(game.batch);
         p2.render(game.batch);
 
-        game.font.draw(game.batch, "Map: " + mapId, 10, virtualHeight - 10);
-        game.font.draw(game.batch, "P1 HP: " + p1.getHp() + "/" + p1.getMaxHp(), 10, virtualHeight - 30);
-        game.font.draw(game.batch, "P2 HP: " + p2.getHp() + "/" + p2.getMaxHp(), 10, virtualHeight - 50);
-        game.font.draw(game.batch, "P1: WASD + SPACE (attack)", 10, virtualHeight - 70);
-        game.font.draw(game.batch, "P2: IJKL + Right ALT (attack)", 10, virtualHeight - 90);
-        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 110);
+        // UI labels
+        if (player1Label != null && player2Label != null) {
+            float scale = 0.2f;
+
+            float w1 = player1Label.getWidth() * scale;
+            float h1 = player1Label.getHeight() * scale;
+
+            float w2 = player2Label.getWidth() * scale;
+            float h2 = player2Label.getHeight() * scale;
+
+            float margin = 2f;
+            float topMargin = 2f;
+
+            // left top
+            float x1 = margin;
+            float y1 = virtualHeight - topMargin - h1;
+
+            // right top
+            float x2 = virtualWidth - margin - w2;
+            float y2 = virtualHeight - topMargin - h2;
+
+            game.batch.draw(player1Label, x1, y1, w1, h1);
+            game.batch.draw(player2Label, x2, y2, w2, h2);
+        }
+
+        // P1 hearts
+        drawHearts(game.batch, p1.getHp(), p1.getMaxHp(), 2, virtualHeight - 70);
+
+        // P2 hearts
+        drawHearts(game.batch, p2.getHp(), p2.getMaxHp(), virtualWidth - 2 - 10 * 24, virtualHeight - 70);
+
+        game.font.draw(game.batch, "WASD + SPACE (attack)", 10, virtualHeight - 70);
+        game.font.draw(game.batch, "IJKL + Right ALT (attack)", virtualWidth - 170, virtualHeight - 70);
+        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 90);
 
         game.batch.end();
     }
@@ -200,5 +254,11 @@ public class GameScreen extends ScreenAdapter {
                 arenaRenderer.disposePuddles(mixedArena.getPuddleVisuals());
             }
         }
+
+        if (player1Label != null) player1Label.dispose();
+        if (player2Label != null) player2Label.dispose();
+
+        if (heartFull != null) heartFull.dispose();
+        if (heartEmpty != null) heartEmpty.dispose();
     }
 }
