@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ArenaAndPlayerTest {
 
     @Test
-    void playerTakeDamage_shouldNotGoBelowZero() {
+    void playerTakeDamageShouldNotGoBelowZero() {
         Player p = new Player(0, 0, 64, 64, null,
             null, new Sword(10, 500),
             1, false);
@@ -21,7 +21,7 @@ public class ArenaAndPlayerTest {
     }
 
     @Test
-    void playerHeal_shouldNotExceedMaxHp() {
+    void playerHealShouldNotExceedMaxHp() {
         Player p = new Player(0, 0, 64, 64, null,
             null, new Sword(10, 500),
             1, false);
@@ -37,7 +37,7 @@ public class ArenaAndPlayerTest {
     }
 
     @Test
-    void arenaHandlePuddles_inPuddleShouldSlowDown() {
+    void arenaHandlePuddlesInPuddleShouldSlowDown() {
         PuddlesOnlyArena arena = new PuddlesOnlyArena(1408, 768, false);
 
         Player p = new Player(360, 240, 10, 10, null, null, null, 1, false);
@@ -48,7 +48,7 @@ public class ArenaAndPlayerTest {
     }
 
     @Test
-    void arenaHandleWalls_overlappingWallShouldPushOut() {
+    void arenaHandleWallsOverlappingWallShouldPushOut() {
         WallsOnlyArena arena = new WallsOnlyArena(1408, 768, false);
 
         Player p = new Player(10, 10, 50, 50, null, null, null, 1, false);
