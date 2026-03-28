@@ -5,6 +5,10 @@ dependencies {
   api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
 
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.0.1'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api:6.0.1'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.1'
+
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }
@@ -12,4 +16,8 @@ dependencies {
 
 jar {
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+test {
+  useJUnitPlatform()
 }

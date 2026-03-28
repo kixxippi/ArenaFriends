@@ -12,6 +12,10 @@ public class DamageEffect extends Effect {
 
     @Override
     public void applyTo(Player player, long nowMs) {
-        //
+        if (isActive(nowMs)) {
+            player.setBonusDamage(extraDamage);
+        } else {
+            player.setBonusDamage(0);
+        }
     }
 }

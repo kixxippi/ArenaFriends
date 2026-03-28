@@ -64,4 +64,7 @@ public abstract class BaseRectangleArena implements Arena {
         // sync back to player
         player.setPosition(r.x, r.y);
     }
+
+    public Array<Rectangle> getWalls() { return walls; }
+    public Array<Rectangle> getPuddles() { return puddles; }
 }

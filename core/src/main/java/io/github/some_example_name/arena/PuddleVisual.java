@@ -11,7 +11,7 @@ public class PuddleVisual {
 
     public PuddleVisual(Rectangle rect, String texturePath) {
         this.rect = rect;
-        this.texture = new Texture(texturePath);
+        this.texture = (texturePath == null) ? null : new Texture(texturePath);
     }
 
     public Rectangle getRect() {
@@ -19,10 +19,11 @@ public class PuddleVisual {
     }
 
     public void render(SpriteBatch batch) {
+        if (texture == null) return;
         batch.draw(texture, rect.x, rect.y, rect.width, rect.height);
     }
 
     public void dispose() {
-        texture.dispose();
+        if (texture != null) texture.dispose();
     }
 }

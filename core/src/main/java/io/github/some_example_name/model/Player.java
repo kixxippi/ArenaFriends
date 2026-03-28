@@ -11,6 +11,7 @@ public class Player {
     private final Rectangle rect;
     private float baseSpeed;
     private float speedMultiplier = 1f;
+    private int bonusDamage = 0;
 
     private final int maxHp;
     int hp;
@@ -22,20 +23,35 @@ public class Player {
 
     private Sword sword;
 
+    // for testing
     public Player(float x, float y, float w, float h,
                   String textureRightPath, String textureLeftPath,
                   Sword sword, int numberPlayer) {
+        this(x, y, w, h, textureRightPath, textureLeftPath, sword, numberPlayer, true);
+    }
+
+    public Player(float x, float y, float w, float h,
+                  String textureRightPath, String textureLeftPath,
+                  Sword sword, int numberPlayer, boolean loadTextures) {
         this.rect = new Rectangle(x, y, w, h);
         this.baseSpeed = 350f;
 
         this.maxHp = 100;
         this.hp = maxHp;
 
-        if(numberPlayer == 1) { this.facing = Direction.RIGHT;}
-        else if(numberPlayer == 2) { this.facing = Direction.LEFT;}
+        if (numberPlayer == 1) {
+            this.facing = Direction.RIGHT;
+        } else if (numberPlayer == 2) {
+            this.facing = Direction.LEFT;
+        }
 
-        this.textureRight = new Texture(Gdx.files.internal(textureRightPath));
-        this.textureLeft = new Texture(Gdx.files.internal(textureLeftPath));
+        if (loadTextures) {
+            this.textureRight = new Texture(Gdx.files.internal(textureRightPath));
+            this.textureLeft = new Texture(Gdx.files.internal(textureLeftPath));
+        } else {
+            this.textureRight = null;
+            this.textureLeft = null;
+        }
 
         this.sword = sword;
     }
@@ -131,7 +147,7 @@ public class Player {
 
     // basic attack without bonus damage
     public void attack(Player target) {
-        attack(target, 0);
+        attack(target, bonusDamage);
     }
 
     // overloaded attack with bonus damage
@@ -143,23 +159,10 @@ public class Player {
         }
     }
 
-    public void setSpeedMultiplier(float multiplier) {
-        this.speedMultiplier = multiplier;
-    }
-
-    public float getSpeedMultiplier() {
-        return speedMultiplier;
-    }
-
-    public float getBaseSpeed() {
-        return baseSpeed;
-    }
-
-    public void setBaseSpeed(float baseSpeed) {
-        this.baseSpeed = baseSpeed;
-    }
-
     public void render(SpriteBatch batch) {
+        // In unit tests textures are null -> skip rendering
+        if (textureRight == null || textureLeft == null) return;
+
         Texture current;
 
         if (facing == Direction.LEFT) {
@@ -211,6 +214,30 @@ public class Player {
 
     public int getMaxHp() {
         return maxHp;
+    }
+
+    public void setSpeedMultiplier(float multiplier) {
+        this.speedMultiplier = multiplier;
+    }
+
+    public float getSpeedMultiplier() {
+        return speedMultiplier;
+    }
+
+    public int getBonusDamage() {
+        return bonusDamage;
+    }
+
+    public void setBonusDamage(int bonusDamage) {
+        this.bonusDamage = bonusDamage;
+    }
+
+    public float getBaseSpeed() {
+        return baseSpeed;
+    }
+
+    public void setBaseSpeed(float baseSpeed) {
+        this.baseSpeed = baseSpeed;
     }
 
     public Direction getFacing() {
