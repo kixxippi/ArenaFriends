@@ -40,6 +40,9 @@ public class PowerUpSpawner {
         if (type == PowerUpType.DAMAGE) {
             powerUpWidth = 30f;
             powerUpHeight = 60f;
+        }else{
+            powerUpWidth = 40f;
+            powerUpHeight = 40f;
         }
 
         for (int i = 0; i < maxAttempts; i++) {
