@@ -11,6 +11,6 @@ public class HealPowerUp extends PowerUp {
 
     @Override
     public void applyTo(Player player, long nowMs) {
-        player.heal();
+        player.heal(healAmount);
     }
 }

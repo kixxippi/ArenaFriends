@@ -5,9 +5,11 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import io.github.some_example_name.map.GameMap;
@@ -20,6 +22,9 @@ import io.github.some_example_name.arena.ArenaRenderer;
 import io.github.some_example_name.arena.WallsOnlyArena;
 import io.github.some_example_name.arena.PuddlesOnlyArena;
 import io.github.some_example_name.arena.MixedArena;
+import io.github.some_example_name.powerup.PowerUpSpawner;
+import io.github.some_example_name.powerup.WorldPowerUp;
+import io.github.some_example_name.effect.Effect;
 
 // background map + two players
 public class GameScreen extends ScreenAdapter {
@@ -46,6 +51,11 @@ public class GameScreen extends ScreenAdapter {
     private Texture heartFull;
     private Texture heartEmpty;
 
+    private Array<WorldPowerUp> worldPowerUps = new Array<>();
+    private PowerUpSpawner powerUpSpawner;
+
+    private Texture whitePixel;
+
     public GameScreen(Starter game, int mapId) {
         this.game = game;
         this.mapId = mapId;
@@ -61,6 +71,33 @@ public class GameScreen extends ScreenAdapter {
             Texture t = (i < fullHearts) ? heartFull : heartEmpty;
             batch.draw(t, startX + i * heartW, startY, heartW, heartH);
         }
+    }
+
+    private void drawBuffBar(SpriteBatch batch, Player player, float x, float y) {
+        Effect buff = player.getActiveBuff();
+        if (buff == null) return;
+
+        long nowMs = System.currentTimeMillis();
+        if (!buff.isActive(nowMs)) return;
+
+        long duration = player.getActiveBuffDurationMs();
+        if (duration <= 0) return;
+
+        float pct = (float) buff.getRemainingMs(nowMs) / (float) duration;
+        pct = MathUtils.clamp(pct, 0f, 1f);
+
+        float barW = 160f;
+        float barH = 10f;
+
+        // background
+        batch.setColor(0f, 0f, 0f, 0.6f);
+        batch.draw(whitePixel, x, y, barW, barH);
+
+        // fill
+        batch.setColor(0.2f, 1f, 0.2f, 0.9f);
+        batch.draw(whitePixel, x, y, barW * pct, barH);
+
+        batch.setColor(1f, 1f, 1f, 1f);
     }
 
     @Override
@@ -99,6 +136,15 @@ public class GameScreen extends ScreenAdapter {
 
         heartFull = new Texture(Gdx.files.internal("ui/heart_full.png"));
         heartEmpty = new Texture(Gdx.files.internal("ui/heart_empty.png"));
+
+        powerUpSpawner = new PowerUpSpawner(virtualWidth, virtualHeight, arena, 15000);
+
+        // 1x1 white pixel texture for drawing bars
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(1, 1, 1, 1);
+        pm.fill();
+        whitePixel = new Texture(pm);
+        pm.dispose();
     }
 
     @Override
@@ -137,6 +183,17 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
+        long nowMs = System.currentTimeMillis();
+
+        // spawn new powerup (each 15 sec)
+        WorldPowerUp spawned = powerUpSpawner.trySpawn(nowMs, p1, p2, worldPowerUps);
+        if (spawned != null) worldPowerUps.add(spawned);
+
+        // render powerups
+        for (WorldPowerUp pu : worldPowerUps) {
+            pu.render(game.batch);
+        }
+
         // draw players
         p1.render(game.batch);
         p2.render(game.batch);
@@ -172,9 +229,13 @@ public class GameScreen extends ScreenAdapter {
         // P2 hearts
         drawHearts(game.batch, p2.getHp(), p2.getMaxHp(), virtualWidth - 2 - 10 * 24, virtualHeight - 70);
 
-        game.font.draw(game.batch, "WASD + SPACE (attack)", 10, virtualHeight - 70);
-        game.font.draw(game.batch, "IJKL + Right ALT (attack)", virtualWidth - 170, virtualHeight - 70);
-        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 90);
+        // Buff bars
+        drawBuffBar(game.batch, p1, 5, virtualHeight - 82);
+        drawBuffBar(game.batch, p2, virtualWidth - 5 - 160, virtualHeight - 82);
+
+        game.font.draw(game.batch, "WASD + SPACE (attack)", 10, virtualHeight - 90);
+        game.font.draw(game.batch, "IJKL + Right ALT (attack)", virtualWidth - 170, virtualHeight - 90);
+        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 110);
 
         game.batch.end();
     }
@@ -207,6 +268,30 @@ public class GameScreen extends ScreenAdapter {
 
             arena.handlePuddles(p1);
             arena.handlePuddles(p2);
+        }
+
+        long nowMs = System.currentTimeMillis();
+
+        // update buffs
+        p1.updateBuff(nowMs);
+        p2.updateBuff(nowMs);
+
+        // pickup logic
+        for (int i = worldPowerUps.size - 1; i >= 0; i--) {
+            WorldPowerUp pu = worldPowerUps.get(i);
+
+            if (pu.getRect().overlaps(p1.getRect())) {
+                pu.getPowerUp().applyTo(p1, nowMs);
+                pu.dispose();
+                worldPowerUps.removeIndex(i);
+                continue;
+            }
+
+            if (pu.getRect().overlaps(p2.getRect())) {
+                pu.getPowerUp().applyTo(p2, nowMs);
+                pu.dispose();
+                worldPowerUps.removeIndex(i);
+            }
         }
 
         // P1 attack
@@ -260,5 +345,12 @@ public class GameScreen extends ScreenAdapter {
 
         if (heartFull != null) heartFull.dispose();
         if (heartEmpty != null) heartEmpty.dispose();
+
+        for (WorldPowerUp pu : worldPowerUps) {
+            pu.dispose();
+        }
+        worldPowerUps.clear();
+
+        if (whitePixel != null) whitePixel.dispose();
     }
 }

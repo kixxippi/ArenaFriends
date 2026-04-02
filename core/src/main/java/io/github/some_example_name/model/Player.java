@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import io.github.some_example_name.combat.Sword;
+import io.github.some_example_name.effect.Effect;
 
 // player class: position, movement, health and basic logic
 public class Player {
@@ -12,6 +13,10 @@ public class Player {
     private float baseSpeed;
     private float speedMultiplier = 1f;
     private int bonusDamage = 0;
+
+    // one active buff at a time
+    private Effect activeBuff = null;
+    private long activeBuffDurationMs = 0; // for UI bar
 
     private final int maxHp;
     int hp;
@@ -83,8 +88,11 @@ public class Player {
     }
 
     public void heal() {
-        int healAmount = 20;
-        hp += healAmount;
+        heal(20);
+    }
+
+    public void heal(int amount) {
+        hp += amount;
         if (hp > maxHp) hp = maxHp;
     }
 
@@ -159,8 +167,40 @@ public class Player {
         }
     }
 
+    // called when player picks SPEED or DAMAGE
+    public void setActiveBuff(Effect buff, long durationMs) {
+        // remove old buff effects immediately
+        clearBuffState();
+
+        this.activeBuff = buff;
+        this.activeBuffDurationMs = durationMs;
+    }
+
+    // call every frame
+    public void updateBuff(long nowMs) {
+        if (activeBuff == null) return;
+
+        // apply effect (SpeedEffect/DamageEffect already know how to reset when inactive)
+        activeBuff.applyTo(this, nowMs);
+
+        // if ended -> clear and normalize
+        if (!activeBuff.isActive(nowMs)) {
+            activeBuff = null;
+            activeBuffDurationMs = 0;
+            clearBuffState();
+        }
+    }
+
+    private void clearBuffState() {
+        // normalize player stats (important when switching buff)
+        setSpeedMultiplier(1f);
+        setBonusDamage(0);
+    }
+
+    public Effect getActiveBuff() { return activeBuff; }
+    public long getActiveBuffDurationMs() { return activeBuffDurationMs; }
+
     public void render(SpriteBatch batch) {
-        // In unit tests textures are null -> skip rendering
         if (textureRight == null || textureLeft == null) return;
 
         Texture current;
@@ -183,76 +223,33 @@ public class Player {
 
     // Getter/Setter
 
-    public Rectangle getRect() {
-        return rect;
-    }
-
-    public float getX() {
-        return rect.x;
-    }
-
-    public float getY() {
-        return rect.y;
-    }
+    public Rectangle getRect() { return rect; }
+    public float getX() { return rect.x; }
+    public float getY() { return rect.y; }
 
     public void setPosition(float x, float y) {
         rect.x = x;
         rect.y = y;
     }
 
-    public float getWidth() {
-        return rect.width;
-    }
+    public float getWidth() { return rect.width; }
+    public float getHeight() { return rect.height; }
 
-    public float getHeight() {
-        return rect.height;
-    }
+    public int getHp() { return hp; }
+    public int getMaxHp() { return maxHp; }
 
-    public int getHp() {
-        return hp;
-    }
+    public void setSpeedMultiplier(float multiplier) { this.speedMultiplier = multiplier; }
+    public float getSpeedMultiplier() { return speedMultiplier; }
 
-    public int getMaxHp() {
-        return maxHp;
-    }
+    public int getBonusDamage() { return bonusDamage; }
+    public void setBonusDamage(int bonusDamage) { this.bonusDamage = bonusDamage; }
 
-    public void setSpeedMultiplier(float multiplier) {
-        this.speedMultiplier = multiplier;
-    }
+    public float getBaseSpeed() { return baseSpeed; }
+    public void setBaseSpeed(float baseSpeed) { this.baseSpeed = baseSpeed; }
 
-    public float getSpeedMultiplier() {
-        return speedMultiplier;
-    }
+    public Direction getFacing() { return facing; }
+    public void setFacing(Direction facing) { this.facing = facing; }
 
-    public int getBonusDamage() {
-        return bonusDamage;
-    }
-
-    public void setBonusDamage(int bonusDamage) {
-        this.bonusDamage = bonusDamage;
-    }
-
-    public float getBaseSpeed() {
-        return baseSpeed;
-    }
-
-    public void setBaseSpeed(float baseSpeed) {
-        this.baseSpeed = baseSpeed;
-    }
-
-    public Direction getFacing() {
-        return facing;
-    }
-
-    public void setFacing(Direction facing) {
-        this.facing = facing;
-    }
-
-    public Sword getSword() {
-        return sword;
-    }
-
-    public void setSword(Sword sword) {
-        this.sword = sword;
-    }
+    public Sword getSword() { return sword; }
+    public void setSword(Sword sword) { this.sword = sword; }
 }

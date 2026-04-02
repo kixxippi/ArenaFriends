@@ -3,7 +3,6 @@ package io.github.some_example_name.powerup;
 import io.github.some_example_name.effect.SpeedEffect;
 import io.github.some_example_name.model.Player;
 
-// C SpeedPowerUp extends PowerUp
 public class SpeedPowerUp extends PowerUp {
     private final long durationMs;
     private final float multiplier;
@@ -17,6 +16,8 @@ public class SpeedPowerUp extends PowerUp {
     public void applyTo(Player player, long nowMs) {
         long endTime = nowMs + durationMs;
         SpeedEffect effect = new SpeedEffect(endTime, multiplier);
-        effect.applyTo(player, nowMs);
+
+        //only 1 buff at a time
+        player.setActiveBuff(effect, durationMs);
     }
 }
