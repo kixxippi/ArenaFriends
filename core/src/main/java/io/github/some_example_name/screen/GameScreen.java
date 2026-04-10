@@ -56,6 +56,31 @@ public class GameScreen extends ScreenAdapter {
 
     private Texture whitePixel;
 
+    // best of 3 state
+    private int p1RoundsWon = 0;
+    private int p2RoundsWon = 0;
+    private boolean matchOver = false;
+
+    // animated winner banner
+    private float winnerBannerY = 0f;
+    private float winnerBannerVel = 80f;
+    private float winnerBannerMinY;
+    private float winnerBannerMaxY;
+
+    // winner images
+    private Texture matchWinnerP1;
+    private Texture matchWinnerP2;
+
+    private Texture rounds0;
+    private Texture rounds1;
+    private Texture rounds2;
+
+    // spawn positions
+    private final float p1SpawnX = 80;
+    private final float p1SpawnY = 80;
+    private final float p2SpawnX = virtualWidth - 140;
+    private final float p2SpawnY = virtualHeight - 140;
+
     public GameScreen(Starter game, int mapId) {
         this.game = game;
         this.mapId = mapId;
@@ -100,6 +125,49 @@ public class GameScreen extends ScreenAdapter {
         batch.setColor(1f, 1f, 1f, 1f);
     }
 
+    private Texture getRoundsTexture(int roundsWon) {
+        if (rounds0 == null || rounds1 == null || rounds2 == null) return null;
+        if (roundsWon <= 0) return rounds0;
+        if (roundsWon == 1) return rounds1;
+        return rounds2;
+    }
+
+    private void resetForNextFight() {
+        // reset players
+        p1.setPosition(p1SpawnX, p1SpawnY);
+        p2.setPosition(p2SpawnX, p2SpawnY);
+
+        p1.fullHeal();
+        p2.fullHeal();
+
+        // remove buffs immediately
+        p1.setSpeedMultiplier(1f);
+        p2.setSpeedMultiplier(1f);
+        p1.setBonusDamage(0);
+        p2.setBonusDamage(0);
+
+        // clear powerups on map
+        for (WorldPowerUp pu : worldPowerUps) pu.dispose();
+        worldPowerUps.clear();
+    }
+
+    private void onFightEnd(int winnerPlayerNumber) {
+        if (winnerPlayerNumber == 1) p1RoundsWon++;
+        else p2RoundsWon++;
+
+        // check match end
+        if (p1RoundsWon >= 2 || p2RoundsWon >= 2) {
+            matchOver = true;
+
+            winnerBannerMinY = virtualHeight * 0.35f;
+            winnerBannerMaxY = virtualHeight * 0.55f;
+            winnerBannerY = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
+            return;
+        }
+
+        resetForNextFight();
+    }
+
     @Override
     public void show() {
         // create camera and viewport with fixed virtual size
@@ -117,15 +185,15 @@ public class GameScreen extends ScreenAdapter {
         Sword sword2 = new Sword(10, 500);
 
         // spawn players, pass textures and sword
-        p1 = new Player(80, 80, 64, 64,
-            "players/player1_right.png",
-            "players/player1_left.png",
-            sword1, 1);
+        p1 = new Player(p1SpawnX, p1SpawnY, 64, 64,
+                "players/player1_right.png",
+                "players/player1_left.png",
+                sword1, 1);
 
-        p2 = new Player(virtualWidth - 140, virtualHeight - 140, 64, 64,
-            "players/player2_right.png",
-            "players/player2_left.png",
-            sword2, 2);
+        p2 = new Player(p2SpawnX, p2SpawnY, 64, 64,
+                "players/player2_right.png",
+                "players/player2_left.png",
+                sword2, 2);
 
         // create arena and renderer
         arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
@@ -139,12 +207,21 @@ public class GameScreen extends ScreenAdapter {
 
         powerUpSpawner = new PowerUpSpawner(virtualWidth, virtualHeight, arena, 15000);
 
-        // 1x1 white pixel texture for drawing bars
+        // 1x1 white pixel texture for drawing bars + dark overlay
         Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
         pm.setColor(1, 1, 1, 1);
         pm.fill();
         whitePixel = new Texture(pm);
         pm.dispose();
+
+        // winner images
+        matchWinnerP1 = new Texture(Gdx.files.internal("ui/match_winner_p1.png"));
+        matchWinnerP2 = new Texture(Gdx.files.internal("ui/match_winner_p2.png"));
+
+        // optional rounds won icons
+        rounds0 = new Texture(Gdx.files.internal("ui/rounds_0.png"));
+        rounds1 = new Texture(Gdx.files.internal("ui/rounds_1.png"));
+        rounds2 = new Texture(Gdx.files.internal("ui/rounds_2.png"));
     }
 
     @Override
@@ -186,12 +263,14 @@ public class GameScreen extends ScreenAdapter {
         long nowMs = System.currentTimeMillis();
 
         // spawn new powerup (each 15 sec)
-        WorldPowerUp spawned = powerUpSpawner.trySpawn(nowMs, p1, p2, worldPowerUps);
-        if (spawned != null) worldPowerUps.add(spawned);
+        if (!matchOver) {
+            WorldPowerUp spawned = powerUpSpawner.trySpawn(nowMs, p1, p2, worldPowerUps);
+            if (spawned != null) worldPowerUps.add(spawned);
 
-        // render powerups
-        for (WorldPowerUp pu : worldPowerUps) {
-            pu.render(game.batch);
+            // render powerups
+            for (WorldPowerUp pu : worldPowerUps) {
+                pu.render(game.batch);
+            }
         }
 
         // draw players
@@ -233,14 +312,60 @@ public class GameScreen extends ScreenAdapter {
         drawBuffBar(game.batch, p1, 5, virtualHeight - 82);
         drawBuffBar(game.batch, p2, virtualWidth - 5 - 160, virtualHeight - 82);
 
-        game.font.draw(game.batch, "WASD + SPACE (attack)", 10, virtualHeight - 90);
-        game.font.draw(game.batch, "IJKL + Right ALT (attack)", virtualWidth - 170, virtualHeight - 90);
-        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 110);
+        // rounds won icons
+        Texture p1RoundsTex = getRoundsTexture(p1RoundsWon);
+        Texture p2RoundsTex = getRoundsTexture(p2RoundsWon);
+
+        float roundsScale = 0.25f;
+        if (p1RoundsTex != null) {
+            float w = p1RoundsTex.getWidth() * roundsScale;
+            float h = p1RoundsTex.getHeight() * roundsScale;
+            game.batch.draw(p1RoundsTex, 5, virtualHeight - 115, w, h);
+        }
+        if (p2RoundsTex != null) {
+            float w = p2RoundsTex.getWidth() * roundsScale;
+            float h = p2RoundsTex.getHeight() * roundsScale;
+            game.batch.draw(p2RoundsTex, virtualWidth - 5 - w, virtualHeight - 115, w, h);
+        }
+
+        // match over overlay + animated winner banner
+        if (matchOver) {
+            // darken whole screen a bit
+            game.batch.setColor(0f, 0f, 0f, 0.45f);
+            game.batch.draw(whitePixel, 0, 0, virtualWidth, virtualHeight);
+            game.batch.setColor(1f, 1f, 1f, 1f);
+
+            // banner up/down
+            winnerBannerY += winnerBannerVel * delta;
+            if (winnerBannerY > winnerBannerMaxY) {
+                winnerBannerY = winnerBannerMaxY;
+                winnerBannerVel = -winnerBannerVel;
+            } else if (winnerBannerY < winnerBannerMinY) {
+                winnerBannerY = winnerBannerMinY;
+                winnerBannerVel = -winnerBannerVel;
+            }
+
+            Texture win = (p1RoundsWon >= 2) ? matchWinnerP1 : matchWinnerP2;
+            if (win != null) {
+                float s = 2f;
+                float w = win.getWidth() * s;
+                float h = win.getHeight() * s;
+                float x = (virtualWidth - w) / 2f;
+                game.batch.draw(win, x, winnerBannerY, w, h);
+            }
+        }
+
+        game.font.draw(game.batch, "WASD + SPACE (attack)", 10, virtualHeight - 120);
+        game.font.draw(game.batch, "IJKL + Right ALT (attack)", virtualWidth - 170, virtualHeight - 120);
+        game.font.draw(game.batch, "ESC - Back to menu", 10, virtualHeight - 140);
 
         game.batch.end();
     }
 
     private void handleInput(float dt) {
+        // when match is over -> freeze gameplay
+        if (matchOver) return;
+
         float dx1 = 0, dy1 = 0;
         if (Gdx.input.isKeyPressed(Input.Keys.W)) dy1 += 1;
         if (Gdx.input.isKeyPressed(Input.Keys.S)) dy1 -= 1;
@@ -303,6 +428,10 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT)) {
             p2.attack(p1);
         }
+
+        // detect fight end
+        if (p1.isDead() && !p2.isDead()) onFightEnd(2);
+        else if (p2.isDead() && !p1.isDead()) onFightEnd(1);
     }
 
     // clamp player inside virtual world
@@ -352,5 +481,12 @@ public class GameScreen extends ScreenAdapter {
         worldPowerUps.clear();
 
         if (whitePixel != null) whitePixel.dispose();
+
+        if (matchWinnerP1 != null) matchWinnerP1.dispose();
+        if (matchWinnerP2 != null) matchWinnerP2.dispose();
+
+        if (rounds0 != null) rounds0.dispose();
+        if (rounds1 != null) rounds1.dispose();
+        if (rounds2 != null) rounds2.dispose();
     }
 }
