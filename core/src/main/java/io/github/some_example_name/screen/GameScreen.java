@@ -141,10 +141,8 @@ public class GameScreen extends ScreenAdapter {
         p2.fullHeal();
 
         // remove buffs immediately
-        p1.setSpeedMultiplier(1f);
-        p2.setSpeedMultiplier(1f);
-        p1.setBonusDamage(0);
-        p2.setBonusDamage(0);
+        p1.clearActiveBuff();
+        p2.clearActiveBuff();
 
         // clear powerups on map
         for (WorldPowerUp pu : worldPowerUps) pu.dispose();

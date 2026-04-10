@@ -82,6 +82,15 @@ public class Player {
         }
     }
 
+    public void clearActiveBuff() {
+        activeBuff = null;
+        activeBuffDurationMs = 0;
+
+        // normalize stats
+        setSpeedMultiplier(1f);
+        setBonusDamage(0);
+    }
+
     public void takeDamage(int amount) {
         hp -= amount;
         if (hp < 0) hp = 0;
