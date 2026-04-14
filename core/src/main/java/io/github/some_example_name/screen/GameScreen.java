@@ -386,11 +386,8 @@ public class GameScreen extends ScreenAdapter {
 
         // arena logic: walls and puddles
         if (arena != null) {
-            arena.handleWalls(p1);
-            arena.handleWalls(p2);
-
-            arena.handlePuddles(p1);
-            arena.handlePuddles(p2);
+            arena.applyLogic(p1);
+            arena.applyLogic(p2);
         }
 
         long nowMs = System.currentTimeMillis();

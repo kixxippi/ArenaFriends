@@ -3,6 +3,7 @@ package io.github.some_example_name.arena;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.math.Rectangle;
 import io.github.some_example_name.model.Player;
+import io.github.some_example_name.arena.logic.ArenaLogicStrategy;
 
 public abstract class BaseRectangleArena implements Arena {
 
@@ -10,6 +11,8 @@ public abstract class BaseRectangleArena implements Arena {
     protected final Array<Rectangle> walls = new Array<>();
     // collision rectangles for puddles
     protected final Array<Rectangle> puddles = new Array<>();
+
+    protected ArenaLogicStrategy logicStrategy;
 
     @Override
     public void handleWalls(Player player) {
@@ -37,6 +40,16 @@ public abstract class BaseRectangleArena implements Arena {
             //reset speed
             player.setSpeedMultiplier(1f);
         }
+    }
+
+    @Override
+    public void setLogicStrategy(ArenaLogicStrategy logicStrategy) {
+        this.logicStrategy = logicStrategy;
+    }
+
+    @Override
+    public void applyLogic(Player player) {
+        if (logicStrategy != null) logicStrategy.apply(player);
     }
 
     // push player out of wall
