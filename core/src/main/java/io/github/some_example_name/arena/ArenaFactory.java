@@ -12,4 +12,14 @@ public class ArenaFactory {
                 return new MixedArena(worldWidth, worldHeight);
         }
     }
+
+    // Abstract Factory: returns the concrete session factory for the given map
+    public static GameSessionFactory createSessionFactory(int mapId) {
+        switch (mapId) {
+            case 1: return new Map1SessionFactory();
+            case 2: return new Map2SessionFactory();
+            case 3:
+            default: return new Map3SessionFactory();
+        }
+    }
 }

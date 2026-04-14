@@ -19,9 +19,7 @@ import io.github.some_example_name.combat.Sword;
 import io.github.some_example_name.arena.Arena;
 import io.github.some_example_name.arena.ArenaFactory;
 import io.github.some_example_name.arena.ArenaRenderer;
-import io.github.some_example_name.arena.WallsOnlyArena;
-import io.github.some_example_name.arena.PuddlesOnlyArena;
-import io.github.some_example_name.arena.MixedArena;
+import io.github.some_example_name.arena.GameSessionFactory;
 import io.github.some_example_name.powerup.PowerUpSpawner;
 import io.github.some_example_name.powerup.WorldPowerUp;
 import io.github.some_example_name.effect.Effect;
@@ -56,9 +54,8 @@ public class GameScreen extends ScreenAdapter {
 
     private Texture whitePixel;
 
-    // best of 3 state
-    private int p1RoundsWon = 0;
-    private int p2RoundsWon = 0;
+    // match state
+    private int matchWinner = 0;          // 1 or 2 after match ends
     private boolean matchOver = false;
 
     // animated winner banner
@@ -70,10 +67,6 @@ public class GameScreen extends ScreenAdapter {
     // winner images
     private Texture matchWinnerP1;
     private Texture matchWinnerP2;
-
-    private Texture rounds0;
-    private Texture rounds1;
-    private Texture rounds2;
 
     // spawn positions
     private final float p1SpawnX = 80;
@@ -125,45 +118,13 @@ public class GameScreen extends ScreenAdapter {
         batch.setColor(1f, 1f, 1f, 1f);
     }
 
-    private Texture getRoundsTexture(int roundsWon) {
-        if (rounds0 == null || rounds1 == null || rounds2 == null) return null;
-        if (roundsWon <= 0) return rounds0;
-        if (roundsWon == 1) return rounds1;
-        return rounds2;
-    }
-
-    private void resetForNextFight() {
-        // reset players
-        p1.setPosition(p1SpawnX, p1SpawnY);
-        p2.setPosition(p2SpawnX, p2SpawnY);
-
-        p1.fullHeal();
-        p2.fullHeal();
-
-        // remove buffs immediately
-        p1.clearActiveBuff();
-        p2.clearActiveBuff();
-
-        // clear powerups on map
-        for (WorldPowerUp pu : worldPowerUps) pu.dispose();
-        worldPowerUps.clear();
-    }
-
     private void onFightEnd(int winnerPlayerNumber) {
-        if (winnerPlayerNumber == 1) p1RoundsWon++;
-        else p2RoundsWon++;
+        matchOver = true;
+        matchWinner = winnerPlayerNumber;
 
-        // check match end
-        if (p1RoundsWon >= 2 || p2RoundsWon >= 2) {
-            matchOver = true;
-
-            winnerBannerMinY = virtualHeight * 0.35f;
-            winnerBannerMaxY = virtualHeight * 0.55f;
-            winnerBannerY = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
-            return;
-        }
-
-        resetForNextFight();
+        winnerBannerMinY = virtualHeight * 0.35f;
+        winnerBannerMaxY = virtualHeight * 0.55f;
+        winnerBannerY = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
     }
 
     @Override
@@ -174,9 +135,6 @@ public class GameScreen extends ScreenAdapter {
         viewport.apply();
         camera.position.set(virtualWidth / 2f, virtualHeight / 2f, 0);
         camera.update();
-
-        // create map by id
-        map = new GameMap(mapId);
 
         // create swords for players
         Sword sword1 = new Sword(10, 500);
@@ -193,9 +151,11 @@ public class GameScreen extends ScreenAdapter {
                 "players/player2_left.png",
                 sword2, 2);
 
-        // create arena and renderer
-        arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
-        arenaRenderer = new ArenaRenderer();
+        // create map, arena, renderer and powerup spawner via Abstract Factory
+        GameSessionFactory sessionFactory = ArenaFactory.createSessionFactory(mapId);
+        map = sessionFactory.createMap();
+        arena = sessionFactory.createArena(virtualWidth, virtualHeight);
+        arenaRenderer = sessionFactory.createArenaRenderer();
 
         player1Label = new Texture(Gdx.files.internal("ui/player1.png"));
         player2Label = new Texture(Gdx.files.internal("ui/player2.png"));
@@ -203,7 +163,7 @@ public class GameScreen extends ScreenAdapter {
         heartFull = new Texture(Gdx.files.internal("ui/heart_full.png"));
         heartEmpty = new Texture(Gdx.files.internal("ui/heart_empty.png"));
 
-        powerUpSpawner = new PowerUpSpawner(virtualWidth, virtualHeight, arena, 15000);
+        powerUpSpawner = sessionFactory.createPowerUpSpawner(virtualWidth, virtualHeight, arena);
 
         // 1x1 white pixel texture for drawing bars + dark overlay
         Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
@@ -215,11 +175,6 @@ public class GameScreen extends ScreenAdapter {
         // winner images
         matchWinnerP1 = new Texture(Gdx.files.internal("ui/match_winner_p1.png"));
         matchWinnerP2 = new Texture(Gdx.files.internal("ui/match_winner_p2.png"));
-
-        // optional rounds won icons
-        rounds0 = new Texture(Gdx.files.internal("ui/rounds_0.png"));
-        rounds1 = new Texture(Gdx.files.internal("ui/rounds_1.png"));
-        rounds2 = new Texture(Gdx.files.internal("ui/rounds_2.png"));
     }
 
     @Override
@@ -243,19 +198,9 @@ public class GameScreen extends ScreenAdapter {
         // draw map background
         map.render(game.batch, virtualWidth, virtualHeight);
 
-        // draw arena (walls / puddles)
+        // draw arena (walls / puddles) via Bridge pattern
         if (arenaRenderer != null && arena != null) {
-            if (arena instanceof WallsOnlyArena) {
-                WallsOnlyArena wallsArena = (WallsOnlyArena) arena;
-                arenaRenderer.renderWalls(game.batch, wallsArena.getWallVisuals());
-            } else if (arena instanceof PuddlesOnlyArena) {
-                PuddlesOnlyArena puddlesArena = (PuddlesOnlyArena) arena;
-                arenaRenderer.renderPuddles(game.batch, puddlesArena.getPuddleVisuals());
-            } else if (arena instanceof MixedArena) {
-                MixedArena mixedArena = (MixedArena) arena;
-                arenaRenderer.renderWalls(game.batch, mixedArena.getWallVisuals());
-                arenaRenderer.renderPuddles(game.batch, mixedArena.getPuddleVisuals());
-            }
+            arena.render(game.batch, arenaRenderer);
         }
 
         long nowMs = System.currentTimeMillis();
@@ -310,22 +255,6 @@ public class GameScreen extends ScreenAdapter {
         drawBuffBar(game.batch, p1, 5, virtualHeight - 82);
         drawBuffBar(game.batch, p2, virtualWidth - 5 - 160, virtualHeight - 82);
 
-        // rounds won icons
-        Texture p1RoundsTex = getRoundsTexture(p1RoundsWon);
-        Texture p2RoundsTex = getRoundsTexture(p2RoundsWon);
-
-        float roundsScale = 0.25f;
-        if (p1RoundsTex != null) {
-            float w = p1RoundsTex.getWidth() * roundsScale;
-            float h = p1RoundsTex.getHeight() * roundsScale;
-            game.batch.draw(p1RoundsTex, 5, virtualHeight - 115, w, h);
-        }
-        if (p2RoundsTex != null) {
-            float w = p2RoundsTex.getWidth() * roundsScale;
-            float h = p2RoundsTex.getHeight() * roundsScale;
-            game.batch.draw(p2RoundsTex, virtualWidth - 5 - w, virtualHeight - 115, w, h);
-        }
-
         // match over overlay + animated winner banner
         if (matchOver) {
             // darken whole screen a bit
@@ -343,7 +272,7 @@ public class GameScreen extends ScreenAdapter {
                 winnerBannerVel = -winnerBannerVel;
             }
 
-            Texture win = (p1RoundsWon >= 2) ? matchWinnerP1 : matchWinnerP2;
+            Texture win = (matchWinner == 1) ? matchWinnerP1 : matchWinnerP2;
             if (win != null) {
                 float s = 2f;
                 float w = win.getWidth() * s;
@@ -452,19 +381,9 @@ public class GameScreen extends ScreenAdapter {
         if (p1 != null) p1.dispose();
         if (p2 != null) p2.dispose();
 
-        // dispose arena textures
+        // dispose arena textures via Bridge pattern
         if (arenaRenderer != null && arena != null) {
-            if (mapId == 1) {
-                WallsOnlyArena wallsArena = (WallsOnlyArena) arena;
-                arenaRenderer.disposeWalls(wallsArena.getWallVisuals());
-            } else if (mapId == 2) {
-                PuddlesOnlyArena puddlesArena = (PuddlesOnlyArena) arena;
-                arenaRenderer.disposePuddles(puddlesArena.getPuddleVisuals());
-            } else if (mapId == 3) {
-                MixedArena mixedArena = (MixedArena) arena;
-                arenaRenderer.disposeWalls(mixedArena.getWallVisuals());
-                arenaRenderer.disposePuddles(mixedArena.getPuddleVisuals());
-            }
+            arena.disposeVisuals(arenaRenderer);
         }
 
         if (player1Label != null) player1Label.dispose();
@@ -482,9 +401,5 @@ public class GameScreen extends ScreenAdapter {
 
         if (matchWinnerP1 != null) matchWinnerP1.dispose();
         if (matchWinnerP2 != null) matchWinnerP2.dispose();
-
-        if (rounds0 != null) rounds0.dispose();
-        if (rounds1 != null) rounds1.dispose();
-        if (rounds2 != null) rounds2.dispose();
     }
 }

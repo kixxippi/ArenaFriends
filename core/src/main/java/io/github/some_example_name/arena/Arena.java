@@ -1,5 +1,6 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import io.github.some_example_name.model.Player;
 
 public interface Arena {
@@ -7,4 +8,8 @@ public interface Arena {
     void handleWalls(Player player);
     // handle puddle effects
     void handlePuddles(Player player);
+    // Bridge: render visuals via the given renderer
+    void render(SpriteBatch batch, ArenaRenderer renderer);
+    // Bridge: dispose visual assets via the given renderer
+    void disposeVisuals(ArenaRenderer renderer);
 }

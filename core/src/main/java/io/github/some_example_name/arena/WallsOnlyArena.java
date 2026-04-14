@@ -1,5 +1,6 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
@@ -55,5 +56,15 @@ public class WallsOnlyArena extends BaseRectangleArena {
 
     public Array<WallVisual> getWallVisuals() {
         return wallVisuals;
+    }
+
+    @Override
+    public void render(SpriteBatch batch, ArenaRenderer renderer) {
+        renderer.renderWalls(batch, wallVisuals);
+    }
+
+    @Override
+    public void disposeVisuals(ArenaRenderer renderer) {
+        renderer.disposeWalls(wallVisuals);
     }
 }

@@ -1,5 +1,6 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
@@ -42,5 +43,15 @@ public class PuddlesOnlyArena extends BaseRectangleArena {
 
     public Array<PuddleVisual> getPuddleVisuals() {
         return puddleVisuals;
+    }
+
+    @Override
+    public void render(SpriteBatch batch, ArenaRenderer renderer) {
+        renderer.renderPuddles(batch, puddleVisuals);
+    }
+
+    @Override
+    public void disposeVisuals(ArenaRenderer renderer) {
+        renderer.disposePuddles(puddleVisuals);
     }
 }
