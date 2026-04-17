@@ -2,6 +2,7 @@ package io.github.some_example_name.arena;
 
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
+import io.github.some_example_name.arena.visitor.VisitableVisual;
 
 public class PuddlesOnlyArena extends BaseRectangleArena {
 
@@ -38,6 +39,13 @@ public class PuddlesOnlyArena extends BaseRectangleArena {
         Rectangle puddle6 = new Rectangle(worldWidth * 0.55f, worldHeight * 0.15f, 150, 80);
         puddles.add(puddle6);
         puddleVisuals.add(new PuddleVisual(puddle6, loadTextures ? "puddles/puddle3.png" : null));
+    }
+
+    @Override
+    public Array<VisitableVisual> getVisuals() {
+        Array<VisitableVisual> out = new Array<>();
+        out.addAll(getPuddleVisuals());
+        return out;
     }
 
     public Array<PuddleVisual> getPuddleVisuals() {

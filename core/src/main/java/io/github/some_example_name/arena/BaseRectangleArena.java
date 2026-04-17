@@ -2,6 +2,7 @@ package io.github.some_example_name.arena;
 
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.math.Rectangle;
+import io.github.some_example_name.arena.exceptions.ArenaLogicNotConfiguredException;
 import io.github.some_example_name.model.Player;
 import io.github.some_example_name.arena.logic.ArenaLogicStrategy;
 
@@ -49,7 +50,10 @@ public abstract class BaseRectangleArena implements Arena {
 
     @Override
     public void applyLogic(Player player) {
-        if (logicStrategy != null) logicStrategy.apply(player);
+        if (logicStrategy == null) {
+            throw new ArenaLogicNotConfiguredException();
+        }
+        logicStrategy.apply(player);
     }
 
     // push player out of wall

@@ -1,9 +1,13 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.utils.Array;
+import io.github.some_example_name.arena.visitor.VisitableVisual;
 import io.github.some_example_name.model.Player;
 import io.github.some_example_name.arena.logic.ArenaLogicStrategy;
 
 public interface Arena {
+    Array<VisitableVisual> getVisuals();
+
     // handle collisions with walls and adjust player position
     void handleWalls(Player player);
     // handle puddle effects

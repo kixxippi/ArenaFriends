@@ -12,16 +12,15 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.some_example_name.arena.visitor.DisposeVisitor;
+import io.github.some_example_name.arena.visitor.RenderVisitor;
+import io.github.some_example_name.arena.visitor.VisitableVisual;
 import io.github.some_example_name.map.GameMap;
 import io.github.some_example_name.model.Player;
 import io.github.some_example_name.Starter;
 import io.github.some_example_name.combat.Sword;
 import io.github.some_example_name.arena.Arena;
 import io.github.some_example_name.arena.ArenaFactory;
-import io.github.some_example_name.arena.ArenaRenderer;
-import io.github.some_example_name.arena.WallsOnlyArena;
-import io.github.some_example_name.arena.PuddlesOnlyArena;
-import io.github.some_example_name.arena.MixedArena;
 import io.github.some_example_name.powerup.PowerUpSpawner;
 import io.github.some_example_name.powerup.WorldPowerUp;
 import io.github.some_example_name.effect.Effect;
@@ -43,7 +42,6 @@ public class GameScreen extends ScreenAdapter {
     private GameMap map;
 
     private Arena arena;
-    private ArenaRenderer arenaRenderer;
 
     private Texture player1Label;
     private Texture player2Label;
@@ -195,7 +193,6 @@ public class GameScreen extends ScreenAdapter {
 
         // create arena and renderer
         arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
-        arenaRenderer = new ArenaRenderer();
 
         player1Label = new Texture(Gdx.files.internal("ui/player1.png"));
         player2Label = new Texture(Gdx.files.internal("ui/player2.png"));
@@ -244,17 +241,11 @@ public class GameScreen extends ScreenAdapter {
         map.render(game.batch, virtualWidth, virtualHeight);
 
         // draw arena (walls / puddles)
-        if (arenaRenderer != null && arena != null) {
-            if (arena instanceof WallsOnlyArena) {
-                WallsOnlyArena wallsArena = (WallsOnlyArena) arena;
-                arenaRenderer.renderWalls(game.batch, wallsArena.getWallVisuals());
-            } else if (arena instanceof PuddlesOnlyArena) {
-                PuddlesOnlyArena puddlesArena = (PuddlesOnlyArena) arena;
-                arenaRenderer.renderPuddles(game.batch, puddlesArena.getPuddleVisuals());
-            } else if (arena instanceof MixedArena) {
-                MixedArena mixedArena = (MixedArena) arena;
-                arenaRenderer.renderWalls(game.batch, mixedArena.getWallVisuals());
-                arenaRenderer.renderPuddles(game.batch, mixedArena.getPuddleVisuals());
+        if (arena != null) {
+            RenderVisitor renderVisitor = new RenderVisitor(game.batch);
+
+            for (VisitableVisual v : arena.getVisuals()) {
+                v.accept(renderVisitor);
             }
         }
 
@@ -450,17 +441,10 @@ public class GameScreen extends ScreenAdapter {
         if (p2 != null) p2.dispose();
 
         // dispose arena textures
-        if (arenaRenderer != null && arena != null) {
-            if (mapId == 1) {
-                WallsOnlyArena wallsArena = (WallsOnlyArena) arena;
-                arenaRenderer.disposeWalls(wallsArena.getWallVisuals());
-            } else if (mapId == 2) {
-                PuddlesOnlyArena puddlesArena = (PuddlesOnlyArena) arena;
-                arenaRenderer.disposePuddles(puddlesArena.getPuddleVisuals());
-            } else if (mapId == 3) {
-                MixedArena mixedArena = (MixedArena) arena;
-                arenaRenderer.disposeWalls(mixedArena.getWallVisuals());
-                arenaRenderer.disposePuddles(mixedArena.getPuddleVisuals());
+        if (arena != null) {
+            DisposeVisitor disposeVisitor = new DisposeVisitor();
+            for (VisitableVisual v : arena.getVisuals()) {
+                v.accept(disposeVisitor);
             }
         }
 

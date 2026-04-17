@@ -2,6 +2,7 @@ package io.github.some_example_name.arena;
 
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
+import io.github.some_example_name.arena.visitor.VisitableVisual;
 
 public class WallsOnlyArena extends BaseRectangleArena {
 
@@ -52,6 +53,14 @@ public class WallsOnlyArena extends BaseRectangleArena {
         walls.add(wall4);
         wallVisuals.add(new WallVisual(wall4, loadTextures ? "walls/wall_horizontal2.png" : null));
     }
+
+    @Override
+    public Array<VisitableVisual> getVisuals() {
+        Array<VisitableVisual> out = new Array<>();
+        out.addAll(getWallVisuals());
+        return out;
+    }
+
 
     public Array<WallVisual> getWallVisuals() {
         return wallVisuals;
