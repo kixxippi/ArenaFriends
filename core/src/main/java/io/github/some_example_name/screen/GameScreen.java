@@ -12,6 +12,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import io.github.some_example_name.DebugReflector;
 import io.github.some_example_name.arena.visitor.DisposeVisitor;
 import io.github.some_example_name.arena.visitor.RenderVisitor;
 import io.github.some_example_name.arena.visitor.VisitableVisual;
@@ -24,9 +25,14 @@ import io.github.some_example_name.arena.ArenaFactory;
 import io.github.some_example_name.powerup.PowerUpSpawner;
 import io.github.some_example_name.powerup.WorldPowerUp;
 import io.github.some_example_name.effect.Effect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // background map + two players
 public class GameScreen extends ScreenAdapter {
+    private static final Logger log = LoggerFactory.getLogger(GameScreen.class);
+
+
     private static final float virtualWidth = 1408f;
     private static final float virtualHeight = 768f;
 
@@ -131,6 +137,8 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void resetForNextFight() {
+        log.info("Resetting for next fight. Current score: p1RoundsWon={}, p2RoundsWon={}", p1RoundsWon, p2RoundsWon);
+
         // reset players
         p1.setPosition(p1SpawnX, p1SpawnY);
         p2.setPosition(p2SpawnX, p2SpawnY);
@@ -155,6 +163,7 @@ public class GameScreen extends ScreenAdapter {
         if (p1RoundsWon >= 2 || p2RoundsWon >= 2) {
             matchOver = true;
 
+            log.info("Match finished. Winner: Player {}", winnerPlayerNumber);
             winnerBannerMinY = virtualHeight * 0.35f;
             winnerBannerMaxY = virtualHeight * 0.55f;
             winnerBannerY = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
@@ -166,6 +175,7 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        log.info("Round init: mapId={}, virtualSize={}x{}", mapId, virtualWidth, virtualHeight);
         // create camera and viewport with fixed virtual size
         camera = new OrthographicCamera();
         viewport = new FitViewport(virtualWidth, virtualHeight, camera);
@@ -190,9 +200,20 @@ public class GameScreen extends ScreenAdapter {
                 "players/player2_right.png",
                 "players/player2_left.png",
                 sword2, 2);
+        log.debug("Players spawned: p1 at ({},{}), p2 at ({},{})", p1SpawnX, p1SpawnY, p2SpawnX, p2SpawnY);
 
         // create arena and renderer
-        arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
+        try {
+            arena = ArenaFactory.createArena(mapId, virtualWidth, virtualHeight);
+            log.info("Arena created: {}", arena.getClass().getSimpleName());
+        } catch (RuntimeException ex) {
+            log.error("Arena creation failed for mapId={}", mapId, ex);
+            throw ex;
+        }
+
+        log.debug("Arena dump:\n{}", DebugReflector.dump(arena));
+        log.debug("P1 dump:\n{}", DebugReflector.dump(p1));
+        log.debug("P2 dump:\n{}", DebugReflector.dump(p2));
 
         player1Label = new Texture(Gdx.files.internal("ui/player1.png"));
         player2Label = new Texture(Gdx.files.internal("ui/player2.png"));
@@ -254,7 +275,12 @@ public class GameScreen extends ScreenAdapter {
         // spawn new powerup (each 15 sec)
         if (!matchOver) {
             WorldPowerUp spawned = powerUpSpawner.trySpawn(nowMs, p1, p2, worldPowerUps);
-            if (spawned != null) worldPowerUps.add(spawned);
+            if (spawned != null){
+                worldPowerUps.add(spawned);
+                log.info("Power-up spawned: type={}, pos=({}, {})",
+                        spawned.getPowerUp().getClass().getSimpleName(),
+                        spawned.getRect().x, spawned.getRect().y);
+            }
 
             // render powerups
             for (WorldPowerUp pu : worldPowerUps) {
@@ -376,9 +402,16 @@ public class GameScreen extends ScreenAdapter {
         clampPlayerToWorld(p2);
 
         // arena logic: walls and puddles
-        if (arena != null) {
-            arena.applyLogic(p1);
-            arena.applyLogic(p2);
+        try {
+            if (arena != null) {
+                arena.applyLogic(p1);
+                arena.applyLogic(p2);
+            } else {
+                log.error("Arena is null in handleInput()");
+            }
+        } catch (RuntimeException ex) {
+            log.error("Arena logic failed", ex);
+            throw ex;
         }
 
         long nowMs = System.currentTimeMillis();
@@ -392,14 +425,30 @@ public class GameScreen extends ScreenAdapter {
             WorldPowerUp pu = worldPowerUps.get(i);
 
             if (pu.getRect().overlaps(p1.getRect())) {
+                log.info("Power-up picked up: player=1, type={}, pos=({}, {})",
+                        pu.getPowerUp().getClass().getSimpleName(),
+                        pu.getRect().x, pu.getRect().y);
+
                 pu.getPowerUp().applyTo(p1, nowMs);
+
+                log.debug("Power-up applied: player=1, type={}",
+                        pu.getPowerUp().getClass().getSimpleName());
+
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
                 continue;
             }
 
             if (pu.getRect().overlaps(p2.getRect())) {
+                log.info("Power-up picked up: player=2, type={}, pos=({}, {})",
+                        pu.getPowerUp().getClass().getSimpleName(),
+                        pu.getRect().x, pu.getRect().y);
+
                 pu.getPowerUp().applyTo(p2, nowMs);
+
+                log.debug("Power-up applied: player=2, type={}",
+                        pu.getPowerUp().getClass().getSimpleName());
+
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
             }
@@ -407,17 +456,26 @@ public class GameScreen extends ScreenAdapter {
 
         // P1 attack
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            log.debug("Attack input: player=1");
             p1.attack(p2);
         }
 
         // P2 attack
         if (Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT)) {
+            log.debug("Attack input: player=2");
             p2.attack(p1);
         }
 
         // detect fight end
-        if (p1.isDead() && !p2.isDead()) onFightEnd(2);
-        else if (p2.isDead() && !p1.isDead()) onFightEnd(1);
+        if (p1.isDead() && !p2.isDead()) {
+            log.info("Fight ended. Winner=Player 2");
+            onFightEnd(2);
+        } else if (p2.isDead() && !p1.isDead()) {
+            log.info("Fight ended. Winner=Player 1");
+            onFightEnd(1);
+        } else if (p1.isDead() && p2.isDead()) {
+            log.error("Fight ended with both players dead (draw).");
+        }
     }
 
     // clamp player inside virtual world
@@ -435,6 +493,8 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void dispose() {
+        log.info("Disposing GameScreen resources...");
+
         // dispose map and players
         if (map != null) map.dispose();
         if (p1 != null) p1.dispose();
