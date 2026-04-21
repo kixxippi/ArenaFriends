@@ -20,6 +20,10 @@ public class WallVisual implements VisitableVisual {
         return rect;
     }
 
+    public Texture getTexture() {
+        return texture;
+    }
+
     public void render(SpriteBatch batch) {
         if (texture == null) return;
         batch.draw(texture, rect.x, rect.y, rect.width, rect.height);

@@ -25,6 +25,8 @@ import io.github.some_example_name.arena.ArenaFactory;
 import io.github.some_example_name.powerup.PowerUpSpawner;
 import io.github.some_example_name.powerup.WorldPowerUp;
 import io.github.some_example_name.effect.Effect;
+import io.github.some_example_name.render.LibGdxRenderer;
+import io.github.some_example_name.render.Renderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,6 +245,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         handleInput(delta);
+        updateGameplay(delta);
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
             game.setScreen(new MenuScreen(game));
@@ -263,7 +266,8 @@ public class GameScreen extends ScreenAdapter {
 
         // draw arena (walls / puddles)
         if (arena != null) {
-            RenderVisitor renderVisitor = new RenderVisitor(game.batch);
+            Renderer renderer = new LibGdxRenderer(game.batch);
+            RenderVisitor renderVisitor = new RenderVisitor(renderer);
 
             for (VisitableVisual v : arena.getVisuals()) {
                 v.accept(renderVisitor);
@@ -393,9 +397,26 @@ public class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyPressed(Input.Keys.J)) dx2 -= 1;
         if (Gdx.input.isKeyPressed(Input.Keys.L)) dx2 += 1;
 
-        // movement through Player methods
+        // movement through Player methods (input -> commands)
         p1.move(dx1, dy1, dt);
         p2.move(dx2, dy2, dt);
+
+        // P1 attack
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+            log.debug("Attack input: player=1");
+            p1.attack(p2);
+        }
+
+        // P2 attack
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT)) {
+            log.debug("Attack input: player=2");
+            p2.attack(p1);
+        }
+    }
+
+    private void updateGameplay(float dt){
+        // when match is over -> freeze gameplay
+        if (matchOver) return;
 
         // clamp players to world bounds
         clampPlayerToWorld(p1);
@@ -407,7 +428,7 @@ public class GameScreen extends ScreenAdapter {
                 arena.applyLogic(p1);
                 arena.applyLogic(p2);
             } else {
-                log.error("Arena is null in handleInput()");
+                log.error("Arena is null in updateGameplay()");
             }
         } catch (RuntimeException ex) {
             log.error("Arena logic failed", ex);
@@ -426,13 +447,13 @@ public class GameScreen extends ScreenAdapter {
 
             if (pu.getRect().overlaps(p1.getRect())) {
                 log.info("Power-up picked up: player=1, type={}, pos=({}, {})",
-                        pu.getPowerUp().getClass().getSimpleName(),
-                        pu.getRect().x, pu.getRect().y);
+                    pu.getPowerUp().getClass().getSimpleName(),
+                    pu.getRect().x, pu.getRect().y);
 
                 pu.getPowerUp().applyTo(p1, nowMs);
 
                 log.debug("Power-up applied: player=1, type={}",
-                        pu.getPowerUp().getClass().getSimpleName());
+                    pu.getPowerUp().getClass().getSimpleName());
 
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
@@ -441,29 +462,17 @@ public class GameScreen extends ScreenAdapter {
 
             if (pu.getRect().overlaps(p2.getRect())) {
                 log.info("Power-up picked up: player=2, type={}, pos=({}, {})",
-                        pu.getPowerUp().getClass().getSimpleName(),
-                        pu.getRect().x, pu.getRect().y);
+                    pu.getPowerUp().getClass().getSimpleName(),
+                    pu.getRect().x, pu.getRect().y);
 
                 pu.getPowerUp().applyTo(p2, nowMs);
 
                 log.debug("Power-up applied: player=2, type={}",
-                        pu.getPowerUp().getClass().getSimpleName());
+                    pu.getPowerUp().getClass().getSimpleName());
 
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
             }
-        }
-
-        // P1 attack
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            log.debug("Attack input: player=1");
-            p1.attack(p2);
-        }
-
-        // P2 attack
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ALT_RIGHT)) {
-            log.debug("Attack input: player=2");
-            p2.attack(p1);
         }
 
         // detect fight end
