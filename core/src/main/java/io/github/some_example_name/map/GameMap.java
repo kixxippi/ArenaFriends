@@ -9,7 +9,17 @@ public class GameMap {
     private Texture mapTexture;
 
     public GameMap(int mapId) {
+        this(mapId, true);
+    }
+
+    public GameMap(int mapId, boolean loadTexture) {
         this.mapId = mapId;
+
+        if (!loadTexture) {
+            mapTexture = null;
+            return;
+        }
+
         switch (mapId) {
             case 1:
                 mapTexture = new Texture(Gdx.files.internal("map/map1.png"));
@@ -20,15 +30,18 @@ public class GameMap {
             case 3:
                 mapTexture = new Texture(Gdx.files.internal("map/map3.png"));
                 break;
+            default:
+                mapTexture = null;
         }
     }
 
     public void render(SpriteBatch batch, float worldWidth, float worldHeight) {
+        if (mapTexture == null) return;
         batch.draw(mapTexture, 0, 0, worldWidth, worldHeight);
     }
 
     public void dispose() {
-        mapTexture.dispose();
+        if (mapTexture != null) mapTexture.dispose();
     }
 
     public int getMapId() {

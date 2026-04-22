@@ -38,7 +38,7 @@ public class MenuScreen extends ScreenAdapter {
         background = new Texture(Gdx.files.internal("menu/menu_bg.png"));
 
         // create title
-        menuTitle = new MenuTitle();
+        menuTitle = new MenuTitle(true);
     }
 
     @Override

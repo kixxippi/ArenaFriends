@@ -10,10 +10,6 @@ public class WallsOnlyArena extends BaseRectangleArena {
 
     // for testing
 
-    public WallsOnlyArena(float worldWidth, float worldHeight) {
-        this(worldWidth, worldHeight, true);
-    }
-
     public WallsOnlyArena(float worldWidth, float worldHeight, boolean loadTextures) {
         float thickness = 38f;
 

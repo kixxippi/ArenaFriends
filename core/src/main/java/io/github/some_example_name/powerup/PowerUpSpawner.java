@@ -23,11 +23,19 @@ public class PowerUpSpawner {
     private final float margin = 50f;
     private final int maxAttempts = 50;
 
+    private final boolean loadTextures;
+
     public PowerUpSpawner(float worldWidth, float worldHeight, Arena arena, long spawnEveryMs) {
+        this(worldWidth, worldHeight, arena, spawnEveryMs, true);
+    }
+
+    // test-mode: можно отключить текстуры
+    public PowerUpSpawner(float worldWidth, float worldHeight, Arena arena, long spawnEveryMs, boolean loadTextures) {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         this.spawnEveryMs = spawnEveryMs;
         this.arena = (BaseRectangleArena) arena;
+        this.loadTextures = loadTextures;
     }
 
     public WorldPowerUp trySpawn(long nowMs, Player p1, Player p2, Array<WorldPowerUp> existing) {
@@ -40,7 +48,7 @@ public class PowerUpSpawner {
         if (type == PowerUpType.DAMAGE) {
             powerUpWidth = 30f;
             powerUpHeight = 60f;
-        }else{
+        } else {
             powerUpWidth = 40f;
             powerUpHeight = 40f;
         }
@@ -54,7 +62,11 @@ public class PowerUpSpawner {
             if (!isValidPosition(rect, p1, p2, existing)) continue;
 
             PowerUp puLogic = createLogic(type);
-            Texture tex = new Texture(Gdx.files.internal(texturePath(type)));
+
+            Texture tex = null;
+            if (loadTextures) {
+                tex = new Texture(Gdx.files.internal(texturePath(type)));
+            }
 
             return new WorldPowerUp(type, rect, puLogic, tex);
         }

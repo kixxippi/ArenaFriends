@@ -1,11 +1,11 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import io.github.some_example_name.arena.visitor.ArenaVisualVisitor;
 import io.github.some_example_name.arena.visitor.VisitableVisual;
-
 
 public class WallVisual implements VisitableVisual {
     private final Rectangle rect;
@@ -13,16 +13,15 @@ public class WallVisual implements VisitableVisual {
 
     public WallVisual(Rectangle rect, String texturePath) {
         this.rect = rect;
-        this.texture = (texturePath == null) ? null : new Texture(texturePath);
+        if (texturePath == null) {
+            this.texture = null;
+        } else {
+            this.texture = new Texture(Gdx.files.internal(texturePath));
+        }
     }
 
-    public Rectangle getRect() {
-        return rect;
-    }
-
-    public Texture getTexture() {
-        return texture;
-    }
+    public Rectangle getRect() { return rect; }
+    public Texture getTexture() { return texture; }
 
     public void render(SpriteBatch batch) {
         if (texture == null) return;

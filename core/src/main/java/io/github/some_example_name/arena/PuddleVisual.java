@@ -1,5 +1,6 @@
 package io.github.some_example_name.arena;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
@@ -13,7 +14,11 @@ public class PuddleVisual implements VisitableVisual {
 
     public PuddleVisual(Rectangle rect, String texturePath) {
         this.rect = rect;
-        this.texture = (texturePath == null) ? null : new Texture(texturePath);
+        if (texturePath == null) {
+            this.texture = null;
+        } else {
+            this.texture = new Texture(Gdx.files.internal(texturePath));
+        }
     }
 
     public Rectangle getRect() {

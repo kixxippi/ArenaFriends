@@ -14,8 +14,12 @@ public class MenuTitle {
     private final Texture titleTexture;
     private float time = 0f;
 
-    public MenuTitle() {
-        titleTexture = new Texture(Gdx.files.internal("menu/menu_title.png"));
+    public MenuTitle(boolean loadTexture) {
+        if (loadTexture) {
+            titleTexture = new Texture(Gdx.files.internal("menu/menu_title.png"));
+        } else {
+            titleTexture = null;
+        }
     }
 
     public void update(float delta) {

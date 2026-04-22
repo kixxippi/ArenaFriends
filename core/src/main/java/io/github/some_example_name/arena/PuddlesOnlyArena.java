@@ -8,12 +8,6 @@ public class PuddlesOnlyArena extends BaseRectangleArena {
 
     private final Array<PuddleVisual> puddleVisuals = new Array<>();
 
-    // for testing
-
-    public PuddlesOnlyArena(float worldWidth, float worldHeight) {
-        this(worldWidth, worldHeight, true);
-    }
-
     public PuddlesOnlyArena(float worldWidth, float worldHeight, boolean loadTextures) {
 
         Rectangle puddle1 = new Rectangle(worldWidth * 0.25f, worldHeight * 0.3f, 120, 80);
