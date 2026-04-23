@@ -8,7 +8,21 @@ import io.github.some_example_name.powerup.WorldPowerUp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Контроллер раундов матча (best of 3).
+ *
+ * Отвечает только за игровую логику: смену раундов, сброс состояния,
+ * подбор усилений, определение победителя.
+ *
+ * Observer pattern — этот класс является источником событий, но не
+ * управляет подписчиками сам. Для этого он делегирует GameEventBus,
+ * который является Subject и хранит список слушателей.
+ *
+ * Подписка на события:
+ *   round.getEventBus().addListener(new LoggingGameEventListener());
+ */
 public class GameRoundController {
+
     private static final Logger log = LoggerFactory.getLogger(GameRoundController.class);
 
     private final float virtualWidth;
@@ -25,15 +39,18 @@ public class GameRoundController {
     private boolean matchOver = false;
 
     // animated winner banner
-    private float winnerBannerY = 0f;
-    private float winnerBannerVel = 80f;
+    private float winnerBannerY    = 0f;
+    private float winnerBannerVel  = 80f;
     private float winnerBannerMinY = 0f;
     private float winnerBannerMaxY = 0f;
+
+    // Observer pattern — Subject вынесен в отдельный класс
+    private final GameEventBus eventBus = new GameEventBus();
 
     public GameRoundController(float virtualWidth, float virtualHeight,
                                float p1SpawnX, float p1SpawnY,
                                float p2SpawnX, float p2SpawnY) {
-        this.virtualWidth = virtualWidth;
+        this.virtualWidth  = virtualWidth;
         this.virtualHeight = virtualHeight;
         this.p1SpawnX = p1SpawnX;
         this.p1SpawnY = p1SpawnY;
@@ -41,14 +58,22 @@ public class GameRoundController {
         this.p2SpawnY = p2SpawnY;
     }
 
+    /** Доступ к шине событий для регистрации наблюдателей. */
+    public GameEventBus getEventBus() {
+        return eventBus;
+    }
+
+    // ---- Игровая логика ----
+
     public void clampPlayerToWorld(Player p) {
-        float x = MathUtils.clamp(p.getX(), 0, virtualWidth - p.getWidth());
+        float x = MathUtils.clamp(p.getX(), 0, virtualWidth  - p.getWidth());
         float y = MathUtils.clamp(p.getY(), 0, virtualHeight - p.getHeight());
         p.setPosition(x, y);
     }
 
     public void resetForNextFight(Player p1, Player p2, Array<WorldPowerUp> worldPowerUps) {
-        log.info("Resetting for next fight. Current score: p1RoundsWon={}, p2RoundsWon={}", p1RoundsWon, p2RoundsWon);
+        log.info("Resetting for next fight. Current score: p1RoundsWon={}, p2RoundsWon={}",
+            p1RoundsWon, p2RoundsWon);
 
         p1.setPosition(p1SpawnX, p1SpawnY);
         p2.setPosition(p2SpawnX, p2SpawnY);
@@ -63,20 +88,23 @@ public class GameRoundController {
         worldPowerUps.clear();
     }
 
-    public void onFightEnd(int winnerPlayerNumber, Player p1, Player p2, Array<WorldPowerUp> worldPowerUps) {
+    public void onFightEnd(int winnerPlayerNumber, Player p1, Player p2,
+                           Array<WorldPowerUp> worldPowerUps) {
         if (winnerPlayerNumber == 1) p1RoundsWon++;
         else p2RoundsWon++;
 
         if (p1RoundsWon >= 2 || p2RoundsWon >= 2) {
             matchOver = true;
 
-            log.info("Match finished. Winner: Player {}", winnerPlayerNumber);
             winnerBannerMinY = virtualHeight * 0.35f;
             winnerBannerMaxY = virtualHeight * 0.55f;
-            winnerBannerY = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
+            winnerBannerY    = (winnerBannerMinY + winnerBannerMaxY) * 0.5f;
+
+            eventBus.notifyMatchEnd(winnerPlayerNumber);
             return;
         }
 
+        eventBus.notifyRoundEnd(winnerPlayerNumber, p1RoundsWon, p2RoundsWon);
         resetForNextFight(p1, p2, worldPowerUps);
     }
 
@@ -108,6 +136,7 @@ public class GameRoundController {
 
             if (pu.getRect().overlaps(p1.getRect())) {
                 pu.getPowerUp().applyTo(p1, nowMs);
+                eventBus.notifyPowerUpPickedUp(1, pu.getType());
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
                 continue;
@@ -115,6 +144,7 @@ public class GameRoundController {
 
             if (pu.getRect().overlaps(p2.getRect())) {
                 pu.getPowerUp().applyTo(p2, nowMs);
+                eventBus.notifyPowerUpPickedUp(2, pu.getType());
                 pu.dispose();
                 worldPowerUps.removeIndex(i);
             }
@@ -135,22 +165,20 @@ public class GameRoundController {
 
         winnerBannerY += winnerBannerVel * delta;
         if (winnerBannerY > winnerBannerMaxY) {
-            winnerBannerY = winnerBannerMaxY;
+            winnerBannerY   = winnerBannerMaxY;
             winnerBannerVel = -winnerBannerVel;
         } else if (winnerBannerY < winnerBannerMinY) {
-            winnerBannerY = winnerBannerMinY;
+            winnerBannerY   = winnerBannerMinY;
             winnerBannerVel = -winnerBannerVel;
         }
     }
 
-    // getters (для UI и тестов)
-    public int getP1RoundsWon() { return p1RoundsWon; }
-    public int getP2RoundsWon() { return p2RoundsWon; }
-    public boolean isMatchOver() { return matchOver; }
+    public int     getP1RoundsWon()  { return p1RoundsWon; }
+    public int     getP2RoundsWon()  { return p2RoundsWon; }
+    public boolean isMatchOver()     { return matchOver; }
 
-    public float getWinnerBannerY() { return winnerBannerY; }
-    public float getWinnerBannerVel() { return winnerBannerVel; }
+    public float getWinnerBannerY()  { return winnerBannerY; }
+    public float getWinnerBannerVel(){ return winnerBannerVel; }
 
-    // чисто для тестов (если надо)
     public void _testSetMatchOver(boolean v) { this.matchOver = v; }
 }

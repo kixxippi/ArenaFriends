@@ -4,33 +4,42 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
-import io.github.some_example_name.arena.visitor.ArenaVisualVisitor;
-import io.github.some_example_name.arena.visitor.VisitableVisual;
+import io.github.some_example_name.arena.visitor.Visitor;
+import io.github.some_example_name.arena.visitor.Shape;
 
-public class WallVisual implements VisitableVisual {
+/**
+ * Конкретный элемент (Visitor pattern).
+ *
+ * Реализует accept() так, что вызывает visitor.visitWall(this) —
+ * тем самым сообщает посетителю точный тип элемента.
+ */
+public class WallVisual implements Shape {
+
     private final Rectangle rect;
     private final Texture texture;
 
     public WallVisual(Rectangle rect, String texturePath) {
         this.rect = rect;
-        if (texturePath == null) {
-            this.texture = null;
-        } else {
-            this.texture = new Texture(Gdx.files.internal(texturePath));
-        }
+        this.texture = (texturePath != null)
+            ? new Texture(Gdx.files.internal(texturePath))
+            : null;
     }
 
-    public Rectangle getRect() { return rect; }
-    public Texture getTexture() { return texture; }
+    /**
+     * Visitor pattern — элемент вызывает метод посетителя,
+     * соответствующий своему классу (visitWall).
+     */
+    @Override
+    public void accept(Visitor visitor) {
+        visitor.visitWall(this);
+    }
+
+    public Rectangle getRect()    { return rect; }
+    public Texture   getTexture() { return texture; }
 
     public void render(SpriteBatch batch) {
         if (texture == null) return;
         batch.draw(texture, rect.x, rect.y, rect.width, rect.height);
-    }
-
-    @Override
-    public void accept(ArenaVisualVisitor visitor) {
-        visitor.visit(this);
     }
 
     public void dispose() {

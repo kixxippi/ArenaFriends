@@ -2,7 +2,7 @@ package io.github.some_example_name.arena;
 
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
-import io.github.some_example_name.arena.visitor.VisitableVisual;
+import io.github.some_example_name.arena.visitor.Shape;
 
 public class PuddlesOnlyArena extends BaseRectangleArena {
 
@@ -36,8 +36,8 @@ public class PuddlesOnlyArena extends BaseRectangleArena {
     }
 
     @Override
-    public Array<VisitableVisual> getVisuals() {
-        Array<VisitableVisual> out = new Array<>();
+    public Array<Shape> getVisuals() {
+        Array<Shape> out = new Array<>();
         out.addAll(getPuddleVisuals());
         return out;
     }
